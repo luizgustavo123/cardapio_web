@@ -1,0 +1,483 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="imagem/png" href="https://i.ibb.co/Cwbt6V2/LOGO-2.png" />
+    <meta charset="utf-8" />
+    <title>Softenter</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui" />
+    <style>
+        #app {
+            background-color: lightblue;
+        }
+        .fieldset-border {
+            border: 2px groove #ddd !important;
+            border-radius: 20px;
+            padding: 0 1.4em 1.4em 1.4em !important;
+            margin: 0 0 1.5em 0 !important;
+            height: 250px;
+            -webkit-box-shadow: 0px 0px 0px 0px #000;
+            box-shadow: 0px 0px 0px 0px #000;
+        }
+
+            .fieldset-border .legend-border {
+                font-size: 1.2em !important;
+                text-align: left !important;
+                width: auto;
+                padding: 0 10px;
+                border-bottom: none;
+            }
+        #comp_img_logo {
+            border-radius: 50%;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/v-mask/dist/v-mask.min.js"></script>
+    <script src="compressjs.js"></script>
+    <script src="formata_dinheiro_bd.js"></script>
+
+    <div id="app">
+        <v-app id="inspire">
+
+            <v-snackbar timeout="2000"
+                        centered
+                        elevation="24"
+                        vertical
+                        v-model="snackbar"
+                        :color="cor_aviso">
+                <v-icon left>{{ icon }}</v-icon>
+
+                {{ text_aviso }}
+
+            </v-snackbar>
+
+            <v-dialog persistent width="200" v-model="carregando">
+                <v-card color="primary"
+                        dark>
+                    <v-card-text>
+                        Carregando... Aguarde !
+                        <v-progress-linear indeterminate
+                                           color="white"
+                                           class="mb-0">
+                        </v-progress-linear>
+                    </v-card-text>
+                </v-card>
+            </v-dialog>
+
+            <div>
+                <v-toolbar dark
+                           prominent
+                           height=110
+                           src="https://i.ibb.co/kg2wfdH/config.jpg">
+
+                    <template v-slot:img="{ props }">
+                        <v-img v-bind="props"
+                               gradient="to right, #1672C4, #1672C4CC, #1672C4CC, #3141D6CC, #3141D6CC"></v-img>
+                    </template>
+
+                    <v-toolbar-title>{{nome_empresa}}</v-toolbar-title>
+
+
+                    <template v-slot:extension>
+                        <v-tabs align-with-title>
+                            <v-btn color="#FFFFFF" text small onclick="window.location.href = 'produtos_cardapio.html'"> <v-icon dark left>mdi-food-variant</v-icon> Itens do Cardápio </v-btn>
+
+                            <v-btn :disabled="disabled_sem_perm" text small onclick="window.location.href = 'config.html'"> <v-icon dark left>mdi-cogs</v-icon> Configurações </v-btn>
+                        </v-tabs>
+                    </template>
+
+                </v-toolbar>
+            </div>
+
+            <v-card elevation="0">
+                <v-toolbar class="mb-2"
+                           color="#1E88E5"
+                           dark
+                           flat>
+                    <v-toolbar-title> <v-icon dark left>mdi-cogs</v-icon> Configurações</v-toolbar-title>
+                </v-toolbar>
+
+                <br>
+                <!--  <v-row dense justify="center">
+                                 <v-col cols="8" sm="3">
+                    <v-checkbox v-model="check_leitor"
+                                label="Utilizar leitor de código de barras"></v-checkbox>
+
+                    <v-checkbox v-model="check_control_est"
+                                label="Controlar estoque"></v-checkbox>
+                </v-col>
+
+                                <v-col cols="11" sm="4">
+
+                                    <fieldset class="fieldset-border">
+                                        <legend class="legend-border">Redes sociais</legend>
+                                        <br>
+                                        <v-row dense justify="center">
+                                            <v-col cols="12" sm="12">
+                                                <v-text-field dense prepend-inner-icon="mdi-facebook" v-model="facebook" label="Facebook" outlined></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12" sm="12">
+                                                <v-text-field dense prepend-inner-icon="mdi-instagram" v-model="instagram" label="Instagram" outlined></v-text-field>
+                                            </v-col>
+                                        </v-row>
+                                    </fieldset>
+
+                                </v-col>
+
+
+
+                            </v-row>
+                                 -->
+
+                <v-row dense justify="center">
+                    <v-col cols="11" sm="4">
+                        <fieldset class="fieldset-border">
+                            <legend class="legend-border">Logotipo da empresa</legend>
+                            <div class="card col-sm-12 col-xs-12 col-lg-10 col-md-10 push-lg-1 push-md-1 comp_img_container_logo">
+                                <v-btn
+                                icon
+                                color="red"
+                                @click="deleta_logo()"
+                              >
+                                <v-icon>mdi-close</v-icon>
+                              </v-btn>
+                                <div class="img-con_logo" title="Imagem"><img src="https://i.ibb.co/n1g2HRY/addimagem.jpg" alt="" id="comp_img_logo" class="img-fluid" width="120" height="120"></div>
+                                <div class="btn-group_logo" id="controls_logo">
+                                    <label class="btn btn-primary" title="select an image (jpeg, png)">
+                                        <span id="comp_file_selector_logo"><span class="fa fa-image"></span></span>
+                                        <input type="file" name="file" id="input_cmprss_logo" onchange="encode_logo();">
+                                    </label>
+                                    <a href="" download="file" id="comp_download_logo" class="btn btn-primary"></a>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </v-col>
+                    
+                    <v-col cols="11" sm="4">
+                        <!--<fieldset class="fieldset-border">
+        <legend class="legend-border">Impressão de recibos</legend>
+        <v-row dense justify="center">
+            <v-col cols="12" sm="12">
+                <v-checkbox v-model="check_termica"
+                            @click="form_imp_termica()"
+                            label="Impressora termica(58mm)"></v-checkbox>
+            </v-col>
+            <v-col cols="12" sm="12">
+                <v-checkbox v-model="check_a4"
+                            @click="form_imp_a4()"
+                            label="Impressora comum(A4)"></v-checkbox>
+            </v-col>
+        </v-row>
+    </fieldset>-->
+                    </v-col>
+                </v-row>
+                <v-row dense justify="center">
+                    <v-col cols="11" sm="4">
+                        <v-text-field v-model="nome_empresa" label="Nome da Empresa" counter maxlength="29" outlined></v-text-field>
+                    </v-col>
+                    <v-col cols="11" sm="4">
+                        <v-text-field v-model="endereco" label="Endereço" outlined></v-text-field>
+                    </v-col>
+                </v-row>
+                <v-row dense justify="center">
+                    <v-col cols="5" sm="2">
+                        <v-text-field v-model="telefone" label="Celular" v-mask="'(##)#####-####'" outlined></v-text-field>
+                    </v-col>
+                    <v-col cols="6" sm="2">
+                        <v-text-field v-model="cnpj" label="CNPJ" outlined></v-text-field>
+                    </v-col>
+                    <v-col cols="3" sm="1">
+                        <v-text-field v-model="taxa_entrega" label="Taxa Entrega" outlined></v-text-field>
+                    </v-col>
+                    <v-col cols="7" sm="2">
+                        <v-text-field v-model="nome_link" label="Link do seu site" readonly outlined></v-text-field>
+                    </v-col>
+                    <v-col cols="1" sm="1">
+                        <v-btn icon  onclick="window.location.href = 'index.html'"> <v-icon dark left>mdi-web</v-icon> </v-btn>
+                    </v-col>
+                </v-row>
+
+                <v-row dense justify="center">
+                    <v-col cols="2" sm="1">
+                        <v-btn color="primary"
+                               x-large
+                               @click="salvar()">
+                            Salvar
+                        </v-btn>
+                        <br><br>
+                    </v-col>
+                </v-row>
+            </v-card>
+
+        </v-app>
+    </div>
+
+    <script>
+
+        var supabase = supabase.createClient('https://spvlqkrfmcslppubtsmu.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwdmxxa3JmbWNzbHBwdWJ0c211Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk4MzY1MjAsImV4cCI6MjAxNTQxMjUyMH0.QrkMEdFUPjXtESCHhR_BTEq061mN-Hvc9gFiXhxZN2E')
+
+
+        function encode_logo() {
+
+            if (document.getElementById("input_cmprss_logo").files.length > 0 || app.__vue__.primeiro_acesso == true) {
+                imagem_alterou = 1
+                app.__vue__.primeiro_acesso = false
+
+                let comp_logo = Compress({
+                    inputSelector: '#input_cmprss_logo',
+                    downloadSelector: '#comp_download_logo',
+                    imageSelector: '#comp_img_logo',
+                    rate: 50,
+                    dimen: { width: 300, height: 300 },
+                });
+
+
+            }
+
+        }
+
+        Vue.use(VueMask.VueMaskPlugin);
+        new Vue({
+            el: '#app',
+            vuetify: new Vuetify(),
+            data: vm => ({
+                //url: 'https://softenter.com.br',
+                show1: false,
+                usuario: '',
+                password: '',
+                dialog_login: true,
+                snackbar: false,
+                text_aviso: '',
+                cor_aviso: "success",
+                icon: 'mdi-check-circle',
+                nome_empresa: '',
+                endereco: '',
+                telefone: '',
+                nome_link: '',
+                cnpj: '',
+                licenca: '',
+                check_control_est: false,
+                check_leitor: false,
+                check_a4: false,
+                check_termica: false,
+                dias_alterados: [],
+                dialog_add_hr: false,
+                add_hr: '',
+                exib_erro_add_hr: false,
+                aberto_fechado_label: '',
+                primeiro_acesso: true,
+                taxa_entrega: '0,00',
+                editedIndex: -1,
+            }),
+
+            watch: {
+
+            },
+
+            created() {
+
+                this.initialize()
+                this.info_empresa()
+                
+                if (sessionStorage.login_ativo != 'true') {
+                    window.location.href = window.location.href.slice(0,window.location.href.length - 11) + "login.html";
+                }
+
+                if (sessionStorage.usuadm == '0') {
+                    this.disabled_sem_perm = true
+                }
+
+
+            },
+
+            methods: {
+
+                deleta_logo(){
+                    document.getElementById("comp_img_logo").src = 'https://i.ibb.co/n1g2HRY/addimagem.jpg'
+                },
+
+                form_imp_termica() {
+                    if (this.check_a4 == true) {
+                        this.check_a4 = false
+                    }
+                },
+                form_imp_a4() {
+                    if (this.check_termica == true) {
+                        this.check_termica = false
+                    }
+                },
+
+
+                info_empresa() {
+                    this.nome_empresa = sessionStorage.nome_empresa
+                },
+
+                async initialize() {
+
+                    //listar = await axios.get(this.url + '/api/empresa_config/listar/empresa_config?Id_empresa=' + sessionStorage.id_empresalogado)
+
+                    var { data, error } = await supabase
+                    .from('empresa')
+                    .select()
+                    .eq('id', sessionStorage.id_empresalogado)    
+
+                    listar = data
+
+                    /*if (localStorage.control_est == "true") {
+                        this.check_control_est = true
+                    } else {
+                        this.check_control_est = false
+                    }*/
+
+                    /*if (localStorage.leitor_barras == "true") {
+                        this.check_leitor = true
+                    } else {
+                        this.check_leitor = false
+                    }*/
+
+                    /*if (localStorage.imp_a4 == "true") {
+                        this.check_a4 = true
+                    } else {
+                        this.check_a4 = false
+                    }*/
+
+                    /*if (localStorage.imp_termica == "true") {
+                        this.check_termica = true
+                    } else {
+                        this.check_termica = false
+                    }*/
+
+                    /*if (localStorage.imp_termica == "false" && localStorage.imp_a4 == "false") {
+                        this.check_a4 = true
+                    }*/
+
+
+
+                    this.nome_empresa = listar[0].nome
+                    this.endereco = listar[0].endereco
+                    this.telefone = listar[0].telefone
+                    this.cnpj = listar[0].cnpj
+                    this.nome_link = listar[0].link_site
+
+                    if (listar[0].taxa_entrega == '') {
+                        this.taxa_entrega = '0,00'
+                    } else {
+                        this.taxa_entrega = parseFloat(listar[0].taxa_entrega).toLocaleString('pt-br', { style: 'decimal', minimumFractionDigits: 2 });
+                    }
+
+                    encode_logo()
+                    document.getElementById("input_cmprss_logo").value = ''
+
+                    if (listar[0].logo != "" && listar[0].logo != null) {
+                        document.getElementById("comp_img_logo").src = listar[0].logo;
+                    } else {
+                        document.getElementById("comp_img_logo").src = 'https://i.ibb.co/n1g2HRY/addimagem.jpg'
+                    }
+
+
+                    //this.licenca = 'Sua licença expira em: ' + listar.data[0].data_licenca.slice(0, 10)
+                },
+
+                async salvar() {
+                    try {
+                        this.carregando = true
+
+/*
+                        if (this.check_control_est == true) {
+                            localStorage.control_est = "true";
+                        } else {
+                            localStorage.control_est = "false";
+                        }
+
+                        if (this.check_leitor == true) {
+                            localStorage.leitor_barras = "true";
+                        } else {
+                            localStorage.leitor_barras = "false";
+                        }
+
+                        if (this.check_a4 == true) {
+                            localStorage.imp_a4 = "true";
+                        } else {
+                            localStorage.imp_a4 = "false";
+                        }
+
+                        if (this.check_termica == true) {
+                            localStorage.imp_termica = "true";
+                        } else {
+                            localStorage.imp_termica = "false";
+                        }
+
+                        if (localStorage.imp_termica == "false" && localStorage.imp_a4 == "false") {
+                            localStorage.imp_a4 = "true";
+                        }*/
+
+                        this.taxa_entrega = formata_dinheiro(this.taxa_entrega)
+
+                        //await axios.post(this.url + '/api/empresa_config/empresa_config/alterar?Nome=' + this.nome_empresa + '&Endereco=' + this.endereco + '&Telefone=' + this.telefone + '&Cnpj=' + this.cnpj + '&Nome_link=' + this.nome_link + '&taxa_entrega=' + this.taxa_entrega + '&Id=' + sessionStorage.id_empresalogado)
+
+                        if(document.getElementById('comp_img_logo').currentSrc == 'https://i.ibb.co/n1g2HRY/addimagem.jpg'){
+                            logo = null    
+                        }else{
+                            logo = document.getElementById('comp_img_logo').currentSrc    
+                        }
+
+                        const { error } = await supabase
+                        .from('empresa')
+                        .update({ logo: logo,
+                         nome: this.nome_empresa,
+                         endereco: this.endereco,
+                         telefone: this.telefone,
+                         cnpj: this.cnpj,
+                         taxa_entrega: this.taxa_entrega,
+                        })
+                        .eq('id', sessionStorage.id_empresalogado)
+
+                        /*if (imagem_alterou == 1) {
+
+                            imagem_alterou = 0
+                            axios.delete(this.url + '/api/empresa_config/empresa_config/deletar_foto?fk_empresa=' + sessionStorage.id_empresalogado)
+
+                            ini = 0
+                            fim = 2000
+                            //teste = 0
+                            do {
+                                imagem2000carac = document.getElementById('comp_img_logo').currentSrc.substr(ini, 1000)
+                                imagem2000carac = imagem2000carac.replaceAll("+", "**maisx");
+                                ini = ini + 1000
+                                salvar_resq = await axios.post(this.url + '/api/empresa_config/empresa_config/altera_foto/?imagem=' + imagem2000carac + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                            } while (imagem2000carac != '')
+                        }*/
+
+                        this.carregando = false
+
+                        this.snackbar = true
+                        this.text_aviso = 'Salvo com sucesso !'
+                        this.cor_aviso = "success"
+                        this.icon = "mdi-mdi-check-circle"
+
+                        /*setTimeout(function () {
+                            window.location.href = window.location.href.slice(0,window.location.href.length - 11) + "login.html";
+                        }, 2000);*/
+                    }
+                    catch (err) {
+                        alert("Erro: " + err.message);
+                        this.carregando = false
+                    }
+                },
+
+            }
+
+        })
+    </script>
+
+</body>
+</html >

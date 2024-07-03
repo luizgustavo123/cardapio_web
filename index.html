@@ -1,0 +1,1499 @@
+﻿<!--Desenvolvido por: LUIZ GUSTAVO VIEIRA DA SILVA-->
+<!--LinkedIn: https://www.linkedin.com/in/luiz-gustavo-dev-->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+
+        .box {
+            width: 100%;
+            height: 80px;
+            position: fixed;
+            z-index: 1000;
+            bottom: 0;
+            left: 0;
+            background-color: #00E676;
+        }
+
+        .fieldset-border {
+            border: 2px groove #ddd !important;
+            border-radius: 20px;
+            padding: 0 1.4em 1.4em 1.4em !important;
+            margin: 0 0 1.5em 0 !important;
+            -webkit-box-shadow: 0px 0px 0px 0px #000;
+            box-shadow: 0px 0px 0px 0px #000;
+        }
+
+            .fieldset-border .legend-border {
+                font-size: 1.2em !important;
+                text-align: left !important;
+                width: auto;
+                padding: 0 10px;
+                border-bottom: none;
+            }
+
+        #comp_img_logo {
+            border-radius: 50%;
+            border: 1px solid #000;
+        }
+    </style>
+    <link rel="icon" type="imagem/png" href="https://i.ibb.co/SR3K5Tb/3059065.png" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cardápio</title>
+    <meta charset="utf-8" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui" />
+    <!--<script src="https://unpkg.com/vue/dist/vue.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/v-mask/dist/v-mask.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+</head>
+
+<body>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="https://unpkg.com/axios@1.0.0/dist/axios.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/v-mask/dist/v-mask.min.js"></script>
+    <script src="formata_dinheiro_bd.js"></script>
+
+    <div id="app">
+        <v-app id="inspire">
+
+            <v-snackbar timeout="5000"
+                        centered
+                        elevation="24"
+                        vertical
+                        v-model="snackbar"
+                        :color="cor_aviso">
+                <v-icon left>{{ icon }}</v-icon>
+
+                {{ text_aviso }}
+
+            </v-snackbar>
+
+            <div>
+                <v-toolbar elevation="1" color="#F44336" height="150px">
+                    <v-spacer></v-spacer>
+
+                    <v-toolbar-title>
+                        <template v-if="src_logo != '' && src_logo != null"> <!--https://i.ibb.co/n1g2HRY/addimagem.jpg-->
+                            <v-img id="comp_img_logo" class="img-fluid" width="120" height="120"
+                                   :src="`${src_logo}`"></v-img>
+                        </template>
+                        <template v-else>
+                            <h1 style="color:white;">{{nome_empresa}}</h1>
+                        </template>
+                    </v-toolbar-title>
+
+                    <v-spacer></v-spacer>
+
+
+                </v-toolbar>
+
+                <div class="text-center">
+                    <v-dialog v-model="dialog_conf_compra"
+                              persistent
+                              width="600px">
+                        <v-card>
+                            <v-system-bar color="blue lighten-5" height="40">
+                                <v-btn icon
+                                       color="red"
+                                       x-large
+                                       @click="dialog_conf_compra = false">
+                                    <v-icon right>mdi-arrow-left</v-icon>
+                                </v-btn>
+                                <v-spacer></v-spacer>
+                            </v-system-bar>
+
+                            <v-row justify="center">
+                                <v-col cols="7"
+                                       md="4">
+                                    <br>
+                                    <h3>RESUMO DO PEDIDO</h3>
+                                </v-col>
+                            </v-row>
+
+                            <v-container>
+
+                                <v-row justify="center">
+                                    <v-col cols="12"
+                                           md="8">
+                                        <v-textarea v-model="conf_pedido" background-color="amber lighten-4" auto-grow outlined rows="6"></v-textarea>
+                                </v-row>
+
+                                <v-divider></v-divider>
+                            </v-container>
+
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn :disabled="desativa_btncompra"
+                                       color="red"
+                                       dark
+                                       @click="comprar()">
+                                    <v-icon dark
+                                            left>
+                                        mdi-whatsapp
+                                    </v-icon>
+                                    ENVIAR PEDIDO
+                                </v-btn>
+                                <v-spacer></v-spacer>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                </div>
+                <div class="text-center">
+                    <v-dialog v-model="dialog_final_compra"
+                              persistent
+                              width="450">
+                        <v-card dark color="green">
+                            <v-toolbar flat
+                                       dark
+                                       color="green"
+                                       height="30">
+                                <v-spacer></v-spacer>
+                                <v-btn icon
+                                       dark
+                                       @click="fechar_dialog_final_compra()">
+                                    <v-icon>mdi-close</v-icon>
+                                </v-btn>
+
+
+                            </v-toolbar>
+
+                            <v-card-text>
+                                <h2 style="color:white">Compra efetuada com sucesso !</h2>
+                                <br>
+                                <p style="color:white">Em breve entraremos em contato para confirmação do pedido</p>
+                            </v-card-text>
+
+
+                        </v-card>
+                    </v-dialog>
+                </div>
+
+                <v-bottom-navigation height="40" v-model="value">
+
+                    <v-btn @click.stop="drawer = !drawer">
+                        <v-icon>mdi-magnify</v-icon>
+                    </v-btn>
+
+                    <v-btn @click="abrir_dialog()">
+                        <v-badge v-model="carrinho"
+                                 bordered
+                                 color="error"
+                                 :content="qtd_carrinho"
+                                 overlap>
+                            <v-icon>mdi-cart-outline</v-icon>
+                        </v-badge>
+                    </v-btn>
+
+                </v-bottom-navigation>
+            </div>
+
+            <v-navigation-drawer v-model="drawer"
+                                 absolute
+                                 temporary>
+                <v-system-bar color="blue lighten-5" height="40">
+                    <h4>Pesquisar Item</h4>
+                    <v-spacer></v-spacer>
+                    <v-btn icon
+                           color="red"
+                           x-large
+                           @click.stop="drawer = !drawer">
+                        <v-icon right>mdi-close</v-icon>
+                    </v-btn>
+                </v-system-bar>
+                <v-row dense justify="center">
+                    <v-col cols="10">
+                        <br>
+                        <v-text-field outlined
+                                      dense
+                                      autofocus
+                                      v-model="prod_descricao"
+                                      @click="limit_prod()"
+                                      label="Pesquisar"
+                                      @click:append="pesq_prod()"
+                                      append-icon="mdi-magnify">
+                        </v-text-field>
+
+                    </v-col>
+                </v-row>
+            </v-navigation-drawer>
+
+            <v-row>
+                <v-col cols="12"
+                       sm="12">
+                    <v-sheet class="d-flex justify-center mb-6">
+                        <v-slide-group v-model="model_categoria"
+                                       show-arrows=false
+                                       @change="select_categoria()">
+                            <v-slide-item v-for="(item, n) in itens_categoria"
+                                          :key="n"
+                                          v-slot="{ active, toggle }">
+                                <div>
+                                    <v-card :color="active ? undefined : 'grey lighten-1'"
+                                            class="ma-4"
+                                            height="80"
+                                            width="80"
+                                            :img="`${item.imagem}`"
+                                            rounded="circle"
+                                            @click="toggle">
+                                    </v-card>
+
+                                    <h6 class="text-center">{{`${item.nome_categoria}`}}</h6>
+                                    
+                                </div>
+
+                            </v-slide-item>
+
+                        </v-slide-group>
+                    </v-sheet>
+                </v-col>
+            </v-row>
+
+            <v-container align="center">
+                <v-row>
+                    <v-col cols="12"
+                           sm="12">
+                        <h2>{{titulo_categoria}}</h2>
+                    </v-col>
+                </v-row>
+            </v-container>
+
+            <v-dialog persistent width="200" v-model="carregando">
+                <v-card color="primary"
+                        dark>
+                    <v-card-text>
+                        Carregando... Aguarde !
+                        <v-progress-linear indeterminate
+                                           color="white"
+                                           class="mb-0">
+                        </v-progress-linear>
+                    </v-card-text>
+                </v-card>
+            </v-dialog>
+
+            <v-item-group multiple v-model="model">
+                <v-container>
+                    <v-row>
+                        <v-col v-for="(item, i) in items"
+                               :key="i"
+                               cols="12"
+                               md="6">
+                            <v-item v-slot="{ active, toggle }">
+                                <v-card :v-model="model"
+                                        :color="active ? '#C8E6C9' : ''"
+                                        
+                                        width="550"
+                                        onclick="app.__vue__.dialog_selec_adicionais = true"
+                                        :disabled="disabled == 1"
+                                        @click="toggle">
+                                    <v-scroll-y-transition>
+                                        <div v-if="active"
+                                             class="display-3 flex-grow-1 text-center">
+
+                                        </div>
+                                    </v-scroll-y-transition>
+
+                                    <v-row>
+                                        <v-col cols="4"
+                                               sm="4">
+                                            <v-img :src="`${item.src}`"
+                                                   style="border-radius: 15px;"
+                                                   height="120"
+                                                   width="120"
+                                                   class="grey darken-4">
+
+                                                <div v-if="active"
+                                                     class="green display-3 flex-grow-1 text-center">
+                                                    <!--<span style="font-size: 30px; margin: 21px 0; color:white;">Selecionado</span>-->
+                                                </div>
+
+                                            </v-img>
+                                        </v-col>
+                                        <v-col cols="6"
+                                               sm="6">
+                                            <template v-if="item.ingredientes == '' || item.ingredientes == null">
+                                                <br>
+                                            </template>
+                                            <div class="text-center">
+                                                <h3>{{`${item.nome}`}}</h3> 
+                                                <h5 style="color:gray;">{{`${item.ingredientes}`}}</h5>
+                                                <h2 style="color:red;">{{`${item.valor}`}}</h2>
+                                            </div>
+                                        </v-col>
+                                    </v-row>
+
+                                </v-card>
+                            </v-item>
+                            <br>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-item-group>
+
+            <div class="text-center">
+                <v-dialog v-model="dialog_selec_adicionais"
+                          persistent
+                          width="500">
+
+
+                    <v-card>
+                        <v-system-bar dark color="red" height="40">
+                            <v-spacer></v-spacer>
+                            <v-btn icon
+                                   color="red"
+                                   x-large
+                                   @click="fechar_dialog_selec_adicionais()">
+                                <v-icon right>mdi-close</v-icon>
+                            </v-btn>
+                        </v-system-bar>
+
+                        <v-card-title class="red">
+                            <h2 class="white--text">{{titulo_prato}}</h2>
+                        </v-card-title>
+
+                        <v-container>
+                            <v-row justify="center">
+                                <v-col cols="6"
+                                       sm="4">
+                                    <br>
+                                    <v-img :src="`${imagem_prato}`"
+                                           style="border-radius: 15px;"
+                                           height="150"
+                                           width="150">
+
+                                    </v-img>
+
+                                </v-col>
+                            </v-row>
+
+                            <v-row justify="center">
+                                <v-col cols="11"
+                                       sm="11">
+                                    <v-data-table v-model="selected_adicionais"
+                                                  :headers="headers_adicionais"
+                                                  :items="itens_adicionais"
+                                                  item-key="name"
+                                                  class="elevation-1"
+                                                  mobile-breakpoint="0"
+                                                  hide-default-footer
+                                                  items-per-page="300">
+
+                                        <template v-slot:item.check_adicional="{ item }">
+                                            <v-checkbox v-model="item.check_adicional"
+                                                        @change="alterapreco_prato"
+                                                        color="success"></v-checkbox>
+                                        </template>
+
+                                        <template v-slot:no-data>
+                                            <v-alert :value="true">
+                                                Sem opções de adicionais
+                                            </v-alert>
+                                        </template>
+
+                                    </v-data-table>
+                                </v-col>
+                            </v-row>
+
+                            <v-row justify="center">
+                                <v-col cols="11" sm="11">
+                                    <v-textarea v-model="observacao" label="Alguma observação para o pedido ?" outlined></v-textarea>
+                                </v-col>
+                            </v-row>
+
+                            <v-row justify="center">
+                                <v-col cols="5" sm="5">
+                                    <v-select v-model="qtd_prato"
+                                              @change="alterapreco_prato"
+                                              :items="qtdselec"
+                                              label="Quantidade"
+                                              outlined></v-select>
+                                </v-col>
+                                <v-col cols="6" sm="6">
+                                    <br>
+                                    <h3>TOTAL: {{total_preco_prato}}</h3>
+                                </v-col>
+                            </v-row>
+
+                            <v-row justify="center">
+                                <v-col cols="8" sm="6">
+                                    <v-btn color="red"
+                                           dark
+                                           @click="add_prato_pedido('minhaDiv')">
+                                        <v-icon dark
+                                                left>
+                                            mdi-checkbox-marked-circle-outline
+                                        </v-icon>
+                                        ADICIONAR AO PEDIDO
+                                    </v-btn>
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </v-card>
+                </v-dialog>
+            </div>
+
+            <br>
+            <div style='display: block;' id="minhaDiv_addprod">
+                <v-row align="center"
+                       justify="space-around">
+                    <v-btn depressed color="blue lighten-4" @click="add_prod()">
+                        VER MAIS PRODUTOS
+
+                        <v-icon right
+                                dark>
+                            mdi-arrow-down-bold
+                        </v-icon>
+                    </v-btn>
+                </v-row>
+            </div>
+            <br>
+            <br>
+            <br>
+            <br>
+
+
+            <div style='display: none;' id="minhaDiv" class="box">
+                <br>
+                <div class="text-center">
+                    <v-dialog v-model="dialog"
+                              persistent
+                              width="600px">
+                        <template v-slot:activator="{ on, attrs }">
+                            <v-badge bordered
+                                     v-model="carrinho"
+                                     color="error"
+                                     :content="qtd_carrinho"
+                                     overlap>
+                                <v-btn @click="abrir_dialog()"
+                                       v-bind="attrs"
+                                       v-on="on">
+                                    FINALIZAR PEDIDO
+                                    <v-icon dark
+                                            right>
+                                        mdi-checkbox-marked-circle-outline
+                                    </v-icon>
+                                </v-btn>
+                            </v-badge>
+                        </template>
+
+
+                        <v-card>
+                            <v-system-bar dark color="red" height="40">
+                                <v-spacer></v-spacer>
+                                <v-btn icon
+                                       dark
+                                       color="red"
+                                       x-large
+                                       @click="fechar_dialog()">
+                                    <v-icon dark right>mdi-close</v-icon>
+                                </v-btn>
+                            </v-system-bar>
+                            <v-card-title color="red" class="headline red">
+                                <h5 style="color:white; font-size:20px;">Carrinho ({{this.dados_produtos.length}})</h5>
+                                <br>
+                            </v-card-title>
+
+
+
+                            <v-container>
+                                <div>
+                                    <v-data-table :headers="headers"
+                                                  :items="dados_produtos"
+                                                  hide-default-footer
+                                                  mobile-breakpoint="0"
+                                                  :items-per-page="5000">
+
+                                        <template v-slot:item.produto="props">
+                                            <br>
+                                            <v-textarea v-model="props.item.produto"
+                                                        solo
+                                                        readonly
+                                                        :rows="props.item.qtd_adicionais_selec">
+                                            </v-textarea>
+                                        </template>
+
+                                        <template v-slot:item.qtd="props">
+                                            <br>
+                                            <v-select v-model="props.item.qtd"
+                                                      @change="alterapreco"
+                                                      :items="qtdselec"
+                                                      outlined></v-select>
+
+                                        </template>
+
+                                        <template v-slot:footer>
+                                            <div>
+                                                <h2 class="text-right">
+
+                                                    <br>
+                                                    {{ totalpedido }}&nbsp&nbsp&nbsp&nbsp
+                                                    <br>
+                                                </h2>
+                                            </div>
+                                        </template>
+                                        <template v-slot:item.actions="{ item }">
+                                            <v-icon color="red"
+                                                    @click="deleteItem(item)">
+                                                mdi-close
+                                            </v-icon>
+                                        </template>
+                                        <template v-slot:no-data>
+                                            <v-alert :value="true">
+                                                O seu carrinho está vazio
+                                            </v-alert>
+                                        </template>
+                                    </v-data-table>
+                                </div>
+
+                                <br>
+
+                                <v-card>
+                                    <v-tabs v-model="tab_entrega"
+                                            background-color="red"
+                                            centered
+                                            dark
+                                            icons-and-text>
+                                        <v-tabs-slider></v-tabs-slider>
+
+                                        <v-tab href="#tab_entrega-1">
+                                            Entrega
+                                            <v-icon>mdi-moped</v-icon>
+                                        </v-tab>
+
+                                        <v-tab href="#tab_entrega-2">
+                                            Retirar no local
+                                            <v-icon>mdi-basket</v-icon>
+                                        </v-tab>
+
+
+
+
+                                    </v-tabs>
+
+                                    <v-tabs-items v-model="tab_entrega">
+                                        <v-tab-item :value="'tab_entrega-' + 1">
+                                            <v-card flat>
+                                                <br>
+                                                <v-row justify="center" dense>
+                                                    <v-col cols="6"
+                                                           sm="6">
+                                                        <v-text-field outlined
+                                                                      :error="exib_erro"
+                                                                      messages="Preenchimento obrigatório"
+                                                                      v-model="nome_cli"
+                                                                      label="Nome"></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="5"
+                                                           sm="5">
+                                                        <v-text-field :error="exib_erro" messages="Preenchimento obrigatório" v-model="cel_cli" v-mask="'(##)#####-####'" label="Celular" outlined></v-text-field>
+                                                    </v-col>
+                                                </v-row>
+                                                <v-row justify="center" dense>
+                                                    <v-col cols="7"
+                                                           sm="8">
+                                                        <v-text-field outlined
+                                                                      :error="exib_erro"
+                                                                      messages="Preenchimento obrigatório"
+                                                                      v-model="end_cli"
+                                                                      label="Endereço"></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="4"
+                                                           sm="3">
+                                                        <v-text-field outlined
+                                                                      :error="exib_erro"
+                                                                      messages="Preenchimento obrigatório"
+                                                                      v-model="endnum_cli"
+                                                                      label="Número"></v-text-field>
+                                                    </v-col>
+                                                </v-row>
+
+                                                <v-row justify="center" dense>
+                                                    <v-col cols="5"
+                                                           sm="5">
+                                                        <v-text-field outlined
+                                                                      :error="exib_erro"
+                                                                      messages="Preenchimento obrigatório"
+                                                                      v-model="bairro_cli"
+                                                                      label="Bairro"></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="6"
+                                                           sm="6">
+                                                        <v-text-field v-model="cidade"
+                                                                      :error="exib_erro"
+                                                                      messages="Preenchimento obrigatório"
+                                                                      @change="entrega()"
+                                                                      label="Cidade"
+                                                                      outlined></v-text-field>
+                                                    </v-col>
+                                                </v-row>
+                                                <v-row justify="center" dense>
+                                                    <v-col cols="5"
+                                                           sm="4">
+                                                        <v-select v-model="form_pag"
+                                                                  :items="['Dinheiro', 'Cartão', 'Pix']"
+                                                                  @change="if(form_pag=='Dinheiro'){disabled_check_troco=false}else{disabled_check_troco=true; check_troco=false}"
+                                                                  label="Forma de Pagamento"
+                                                                  outlined></v-select>
+                                                    </v-col>
+                                                    <v-col cols="6"
+                                                           sm="7">
+                                                        <br>
+                                                        <h4>Taxa de Entrega: R$ {{taxa_entrega}}</h4>
+                                                    </v-col>
+                                                </v-row>
+                                                <v-row justify="center" dense>
+                                                    <v-col cols="4"
+                                                           sm="4">
+                                                        <v-checkbox v-model="check_troco"
+                                                                    @change="if(check_troco==true){dis_troco=false}else{dis_troco=true}"
+                                                                    color="success"
+                                                                    :disabled="disabled_check_troco"
+                                                                    label="Preciso de Troco"></v-checkbox>
+                                                    </v-col>
+
+                                                    <v-col cols="7"
+                                                           sm="4">
+                                                        <v-text-field v-model="troco"
+                                                                      :error="exib_erro_troco"
+                                                                      :disabled="dis_troco"
+                                                                      label="Digite o valor que irá pagar"
+                                                                      outlined></v-text-field>
+                                                    </v-col>
+
+                                                    <v-col cols="0"
+                                                           sm="3">
+                                                    </v-col>
+
+                                                </v-row>
+                                            </v-card>
+                                        </v-tab-item>
+                                        <v-tab-item :value="'tab_entrega-' + 2">
+                                            <v-card flat>
+                                                <br>
+                                                <v-row justify="center" dense>
+                                                    <v-col cols="6"
+                                                           sm="6">
+                                                        <v-text-field outlined
+                                                                      :error="exib_erro"
+                                                                      messages="Preenchimento obrigatório"
+                                                                      v-model="nome_cli"
+                                                                      label="Nome"></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="5"
+                                                           sm="5">
+                                                        <v-text-field :error="exib_erro" messages="Preenchimento obrigatório" v-model="cel_cli" v-mask="'(##)#####-####'" label="Celular" outlined></v-text-field>
+                                                    </v-col>
+                                                </v-row>
+                                                <br>
+                                                <v-row justify="center" dense>
+                                                    <v-col cols="3"
+                                                           sm="2">
+                                                        <h4>Retirar em: </h4>
+                                                    </v-col>
+                                                    <v-col cols="1"
+                                                           sm="1">
+                                                        <v-icon color="red">
+                                                            mdi-map-marker
+                                                        </v-icon>
+                                                    </v-col>
+                                                    <v-col cols="7"
+                                                           sm="8">
+                                                        <h4>{{endereco_empresa}}</h4>
+                                                    </v-col>
+                                                </v-row>
+                                                <br>
+                                            </v-card>
+                                        </v-tab-item>
+                                    </v-tabs-items>
+                                </v-card>
+
+
+                                <v-divider></v-divider>
+                            </v-container>
+
+
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn color="red"
+                                       large
+                                       dark
+                                       @click="validar_info_dados()">
+                                    CONTINUAR
+                                    <v-icon right>mdi-arrow-right</v-icon>
+                                </v-btn>
+                                <v-spacer></v-spacer>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <v-dialog v-model="dialog_carrinho_vazio"
+                          width="500">
+                    <v-card>
+                        <v-card-title dark class="text-h5 red">
+                            <h5 style="color:white; font-size:30px;">Carrinho (0)</h5>
+                        </v-card-title>
+
+                        <v-card-text>
+                            <br><br>
+                            <v-row justify="center">
+                                <v-col cols="10"
+                                       sm="7">
+                                    <h2>O seu carrinho está vazio</h2>
+                                </v-col>
+                                <v-col cols="1"
+                                       sm="1">
+                                    <v-icon large>
+                                        mdi-cart-outline
+                                    </v-icon>
+                                </v-col>
+                            </v-row>
+                            <br><br>
+                        </v-card-text>
+
+                        <v-divider></v-divider>
+
+                        <v-card-actions>
+                            <v-spacer></v-spacer>
+                            <v-btn color="primary"
+                                   text
+                                   @click="dialog_carrinho_vazio = false">
+                                OK
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+            </div>
+
+            <v-footer
+            v-bind="localAttrs"
+            :padless="padless"
+            color="red"
+          >
+          <v-col class="text-center" cols="12">
+    
+            <span style="color:white;">Desenvolvido por </span> <a style="color:white;" href="login.html">SoftEnter</a>
+                
+            </v-col>
+          </v-footer>
+
+        </v-app>
+    </div>
+
+
+
+    <script>
+        Vue.use(VueMask.VueMaskPlugin);
+
+        var supabase = supabase.createClient('https://spvlqkrfmcslppubtsmu.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwdmxxa3JmbWNzbHBwdWJ0c211Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk4MzY1MjAsImV4cCI6MjAxNTQxMjUyMH0.QrkMEdFUPjXtESCHhR_BTEq061mN-Hvc9gFiXhxZN2E')
+
+        document.addEventListener('keydown', function (event) {
+            if (event.keyCode !== 13) return;
+            app.__vue__.pesq_prod()
+        }),
+
+            new Vue({
+                el: '#app',
+                vuetify: new Vuetify(),
+                data: () => ({
+                    url: 'https://softenter.com.br',
+                    id_empresa: '1365',
+                    //pagination: {},
+                    headers: [
+                        { text: 'Quantidade', align: 'center', value: 'qtd', width: '100' },
+                        { text: 'Produto', value: 'produto', width: '300' },
+                        // { text: 'Preço', value: 'preco', width: '100' },
+                        { text: 'Total', value: 'total', width: '100' },
+                        { text: '', value: 'actions' },
+                    ],
+                    exib_erro: false,
+                    data_entrega: '',
+                    end_cli: '',
+                    endnum_cli: '',
+                    bairro_cli: '',
+                    cidade: '',
+                    nome_cli: '',
+                    cel_cli: '',
+                    carregando: false,
+                    soma: 0,
+                    select: null,
+                    dados_produtos: [],
+                    cidades_item: ['Aramina', 'Guará', 'Igarapava', 'Ituverava', 'São Joaquim da barra', 'Outra cidade'],
+                    qtdselec: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50'],
+                    itens_categoria: [],
+                    value: 1,
+                    active: true,
+                    dialog: false,
+                    items: [],
+                    prod_descricao: '',
+                    model: null,
+                    toggle: null,
+                    active: null,
+                    disabled: 0,
+                    fim: 40,
+                    ini: 20,
+                    totalpedido: '',
+                    model_categoria: null,
+                    qtd_carrinho: 0,
+                    carrinho: false,
+                    dialog_carrinho_vazio: false,
+                    qtd_carrinho_aux: [],
+                    drawer: null,
+                    pesquisou: false,
+                    inicio_add_prod: 20,
+                    desativa_btncompra: false,
+                    snackbar: false,
+                    dialog_final_compra: false,
+                    dialog_selec_adicionais: false,
+                    titulo_prato: '',
+                    imagem_prato: '',
+                    observacao: '',
+                    total_preco_prato: 0,
+                    adicionais_selecionados: [],
+                    qtd_prato: '1',
+                    tab_entrega: null,
+                    endereco_empresa: '',
+                    dialog_conf_compra: false,
+                    conf_pedido: '',
+                    dialog_troco: false,
+                    check_troco: false,
+                    dis_troco: true,
+                    form_pag: 'Dinheiro',
+                    troco: 0,
+                    taxa_entrega: '0,00',
+                    exib_erro_troco: false,
+                    disabled_check_troco: false,
+
+
+                    selected_adicionais: true,
+                    headers_adicionais: [
+                        { text: '', value: 'check_adicional' },
+                        { text: 'Adicionais', value: 'nome_adicional' },
+                        { text: 'Preço', value: 'preco_adicional' },
+                    ],
+                    itens_adicionais: [
+                        {
+                            check_adicional: false,
+                            nome_adicional: '',
+                            preco_adicional: '',
+                        },
+
+                    ],
+
+                }),
+
+                watch: {
+                    async dialog_selec_adicionais(val) {
+                        if (val == true) {
+                            this.titulo_prato = listar_estoques[this.model[this.model.length - 1]].produto
+                            this.imagem_prato = listar_estoques[this.model[this.model.length - 1]].foto_produto
+
+                            this.selected_adicionais = []
+                            this.observacao = ''
+                            this.qtd_prato = '1'
+
+                            document.getElementById('minhaDiv').style.display = 'none';
+
+                            var { data, error } = await supabase
+                            .from('itens_adicionais')
+                            .select()
+                            .eq('fk_adicionais', listar_estoques[this.model[this.model.length - 1]].fk_adicionais)
+                            .eq('fk_empresa', this.id_empresa)
+                            listar_adicionais = data
+
+                            //listar_adicionais = await axios.get(this.url + '/api/itens_adicionais/listar/itens_adicionais_Id_produto?Fk_empresa=' + data[0].id + '&Id_produto=' + listar_estoques[this.model[this.model.length - 1]].id)
+
+                            this.itens_adicionais = []
+                            if(listar_adicionais != null){
+                                for (var i = 0; i < listar_adicionais.length; i++) {
+                                    this.itens_adicionais.push(
+                                        {
+                                            check_adicional: false,
+                                            nome_adicional: listar_adicionais[i].nome,
+                                            preco_adicional: listar_adicionais[i].preco.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'}),
+                                        })
+                                }
+                            }
+                            this.alterapreco_prato()
+                        }
+                    },
+                },
+
+                created() {
+                    this.initialize()
+
+                },
+                methods: {
+
+                    validar_info_dados() {
+
+                        if ((this.nome_cli == "" || this.cel_cli == "") && this.tab_entrega == 'tab_entrega-2') {
+                            this.exib_erro = true
+                            alert("Erro: Preencha todos os campos !");
+                        } else if ((this.nome_cli == "" || this.cel_cli == "" || this.end_cli == "" || this.bairro_cli == "" || this.cidade == "" || this.endnum_cli == "") && this.tab_entrega == 'tab_entrega-1') {
+                            this.exib_erro = true
+                            alert("Erro: Preencha todos os campos !");
+                        } else if (((parseFloat(formata_dinheiro(this.troco.toString())) - (parseFloat(formata_dinheiro(this.total_preco_prato.slice(3))) + parseFloat(listar_empresa[0].taxa_entrega))) < 0) && this.check_troco == true && this.tab_entrega == 'tab_entrega-1') {
+                            this.exib_erro_troco = true
+                            alert("Erro: Valor pago menor que o valor do pedido !");
+                        } else {
+                            if (this.tab_entrega == 'tab_entrega-2') {
+                                this.end_cli = ""
+                                this.bairro_cli = ""
+                                this.cidade = ""
+                                this.endnum_cli = ""
+                            }
+                            this.dialog_conf_compra = true
+
+                            this.conf_pedido = ''
+
+
+                            if (this.tab_entrega == 'tab_entrega-1') {
+                                this.conf_pedido = this.conf_pedido + ' ---------------- ENTREGA ---------------------\n'
+                            } else {
+                                this.conf_pedido = this.conf_pedido + '-- VOU RETIRAR NO LOCAL --\n'
+                            }
+
+                            this.conf_pedido = this.conf_pedido + '\n CLIENTE: ' + this.nome_cli + '\n CELULAR: ' + this.cel_cli
+
+                            if (this.tab_entrega == 'tab_entrega-1') {
+                                this.conf_pedido = this.conf_pedido + '\n ENDEREÇO: ' + this.end_cli + ' nº ' + this.endnum_cli + ', ' + this.bairro_cli + ', ' + this.cidade + '\n'
+                            } else {
+                                this.conf_pedido = this.conf_pedido + '\n\n ENDEREÇO DO ESTABELECIMENTO ↓ \n' + this.endereco_empresa + '\n'
+                            }
+                            this.conf_pedido = this.conf_pedido + '\n ------------- ITENS DO PEDIDO ----------- \n\n'
+
+                            for (i = 0; i < this.dados_produtos.length; i++) {
+                                this.conf_pedido = this.conf_pedido + this.dados_produtos[i].qtd + 'x ' + this.dados_produtos[i].produto + '----------------------------------------------------------\n'
+                            }
+
+                            this.conf_pedido = this.conf_pedido + '                  TOTAL ITENS: ' + this.total_preco_prato
+                            this.conf_pedido = this.conf_pedido + '\n        TAXA DE ENTREGA: +' + 'R$ ' + parseFloat(listar_empresa[0].taxa_entrega).toLocaleString('pt-br', { style: 'decimal', minimumFractionDigits: 2 });
+
+                            this.conf_pedido = this.conf_pedido + '\n ----------------------------------------------------------'
+
+                            this.conf_pedido = this.conf_pedido + '\n               TOTAL PEDIDO: R$ ' + (parseFloat(formata_dinheiro(this.total_preco_prato.slice(3))) + parseFloat(listar_empresa[0].taxa_entrega)).toLocaleString('pt-br', { style: 'decimal', minimumFractionDigits: 2 });
+
+                            this.conf_pedido = this.conf_pedido + '\n ----------------------------------------------------------'
+
+                            this.conf_pedido = this.conf_pedido + '\n FORMA DE PAGAMENTO: ' + this.form_pag
+
+                            if (this.check_troco == true) {
+                                // VERIFICA SE O VALOR DO PRODUTO É MAIOR QUE 1000 PARA FORMATAR O VALOR CORRETAMENTE
+                                if (parseInt(this.troco.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                    troco_ped = this.troco.toString().replace(".", "");
+                                } else {
+                                    troco_ped = this.troco.toString().replace(",", ".");
+                                }
+
+                                troco_ped = troco_ped.toString().replace(",", ".");
+
+                                // VERIFICA SE O VALOR DO PRODUTO É MAIOR QUE 1000 PARA FORMATAR O VALOR CORRETAMENTE
+                                if (parseInt(this.total_preco_prato.toString().slice(3).replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                    total_preco__pedido = this.total_preco_prato.toString().slice(3).replace(".", "");
+                                } else {
+                                    total_preco__pedido = this.total_preco_prato.toString().slice(3).replace(",", ".");
+                                }
+
+                                total_preco__pedido = total_preco__pedido.toString().replace(",", ".");
+
+                                this.conf_pedido = this.conf_pedido + '\n             VALOR DO TROCO: ' + (parseFloat(troco_ped) - (parseFloat(total_preco__pedido) + parseFloat(listar_empresa[0].taxa_entrega))).toLocaleString('pt-br', { style: 'currency', currency: 'BRL' }) + '\n'
+                            } else {
+                                this.conf_pedido = this.conf_pedido + '\n             VALOR DO TROCO: 0,00'
+                            }
+                        }
+                    },
+
+                    fechar_dialog_selec_adicionais() {
+                        this.dialog_selec_adicionais = false
+                        this.model = []
+
+                        if (this.dados_produtos.length > 0) {
+                            document.getElementById('minhaDiv').style.display = 'block';
+                        }
+                    },
+
+                    add_prato_pedido(el) {
+                        var item_selecionado = this.model[this.model.length - 1];
+                        var adicionais_selecionados_tex = ''
+
+                        for (i = 0; i < this.adicionais_selecionados.length; i++) {
+                            //adicionais_selecionados_tex = adicionais_selecionados_tex + adicionais_selecionados[i].nome + ' (' + adicionais_selecionados[i].preco.slice(3) + ')\n'
+                            adicionais_selecionados_tex = adicionais_selecionados_tex.concat(' + ', this.adicionais_selecionados[i].nome, ' (', this.adicionais_selecionados[i].preco.slice(3), ')\n')
+                        }
+                        qtd_linhas = 2
+                        Obs_pedido = ''
+                        if (this.observacao != '') {
+                            Obs_pedido = '\nObs: ' + this.observacao.toLowerCase() + '\n'
+                            qtd_linhas = 4
+                        }
+
+                        this.dados_produtos.push(
+                            {
+                                id: listar_estoques[item_selecionado].id,
+                                //custo: listar_estoques[item_selecionado].custo.slice(3, listar_estoques[item_selecionado].custo.length),
+                                produto: this.items[item_selecionado].nome + ' (' + parseFloat(preco_prato).toLocaleString('pt-br', { style: 'currency', currency: 'BRL' }) + ')\n' + adicionais_selecionados_tex.toLowerCase() + Obs_pedido,
+                                qtd: this.qtd_prato,
+                                preco: (total_adicionais + parseFloat(preco_prato)).toLocaleString('pt-br', { style: 'currency', currency: 'BRL' }),
+                                total: ((total_adicionais + parseFloat(preco_prato)) * parseInt(this.qtd_prato)).toLocaleString('pt-br', { style: 'currency', currency: 'BRL' }),
+                                qtd_adicionais_selec: this.adicionais_selecionados.length + qtd_linhas
+                            })
+
+                        // Atualiza informação de quantidade de item no carinho
+                        this.carrinho = true
+                        this.qtd_carrinho = this.qtd_carrinho + parseInt(this.dados_produtos[this.dados_produtos.length - 1].qtd)
+
+                        this.dialog_selec_adicionais = false
+
+                        this.model = []
+                        this.adicionais_selecionados = []
+
+                        document.getElementById(el).style.display = 'block';
+                    },
+
+                    alterapreco_prato() {
+
+                        this.adicionais_selecionados = []
+                        total_adicionais = 0
+                        for (i = 0; i < this.itens_adicionais.length; i++) {
+
+                            if (this.itens_adicionais[i].check_adicional == true) {
+                                this.adicionais_selecionados.push(
+                                    {
+                                        nome: this.itens_adicionais[i].nome_adicional,
+                                        preco: this.itens_adicionais[i].preco_adicional,
+
+                                    })
+
+                                total_adicionais = total_adicionais + parseFloat(listar_adicionais[i].preco)
+                            }
+                        }
+
+
+
+                        preco_prato = listar_estoques[this.model[this.model.length - 1]].valor
+
+                        total_prato = (total_adicionais + parseFloat(preco_prato)) * parseInt(this.qtd_prato)
+
+
+                        this.total_preco_prato = total_prato.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' })
+                    },
+
+
+                    fechar_dialog_final_compra() {
+
+                        window.location.reload(true);
+                    },
+
+                    deleteItem(item) {
+                        this.editedIndex = this.dados_produtos.indexOf(item)
+                        this.dados_produtos.splice(this.editedIndex, 1)
+                        this.model.splice(this.editedIndex, 1)
+                        this.alterapreco()
+                        this.qtd_carrinho = this.dados_produtos.length
+
+                        if (this.qtd_carrinho == 0) {
+                            Mudarestado('minhaDiv')
+                            this.carrinho = false
+                        }
+                    },
+
+
+                    entrega() {
+                        if (this.cidade == 'Aramina') {
+                            this.data_entrega = 'Dia de entrega nesta cidade: Quarta-feira'
+                        } else if (this.cidade == 'Guará') {
+                            this.data_entrega = 'Dia de entrega nesta cidade: Terça-feira'
+                        } else if (this.cidade == 'Igarapava') {
+                            this.data_entrega = 'Dia de entrega nesta cidade: Quarta-feira'
+                        } else if (this.cidade == 'Ituverava') {
+                            this.data_entrega = 'Dias de entrega nesta cidade: Segunda, Quinta e Sexta à tarde'
+                        } else if (this.cidade == 'São Joaquim da barra') {
+                            this.data_entrega = 'Dia de entrega nesta cidade: Terça-feira'
+                        } else if (this.cidade == 'Outra cidade') {
+                            this.data_entrega = 'Informe a sua cidade após finalizar a compra'
+                        }
+                    },
+
+                    alterapreco() {
+                        soma = 0
+                        for (i = 0; i < this.dados_produtos.length; i++) {
+
+                            // VERIFICA SE O VALOR DO PRODUTO É MAIOR QUE 1000 PARA FORMATAR O VALOR CORRETAMENTE
+                            if (parseInt(this.dados_produtos[i].preco.toString().replaceAll(",", "").replaceAll(".", "").slice(2, this.dados_produtos[i].length).length) > 5) {
+                                preco_prod = this.dados_produtos[i].preco.toString().replace(".", "");
+                            } else {
+                                preco_prod = this.dados_produtos[i].preco
+                            }
+
+                            this.dados_produtos[i].total = (this.dados_produtos[i].qtd * preco_prod.substr(3, this.dados_produtos[i].preco.length).replace(",", ".")).toLocaleString('pt-br', { style: 'currency', currency: 'BRL' })
+
+                            // VERIFICA SE O VALOR DO PRODUTO É MAIOR QUE 1000 PARA FORMATAR O VALOR CORRETAMENTE
+                            if (parseInt(this.dados_produtos[i].total.toString().replaceAll(",", "").replaceAll(".", "").slice(2, this.dados_produtos[i].length).length) > 5) {
+                                sub_total = this.dados_produtos[i].total.toString().replace(".", "");
+                            } else {
+                                sub_total = this.dados_produtos[i].total
+                            }
+
+                            soma = soma + parseFloat(sub_total.substr(3, sub_total.length).replace(",", "."))
+
+                        }
+                        //this.dados_produtos[i].preco
+                        this.totalpedido = 'TOTAL: ' + soma.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' })
+
+                    },
+
+                    select_categoria() {
+                        this.inicio_add_prod = 20
+
+                        /* if (this.model != null) {
+                             this.selec_prod()
+                         }*/
+                        this.qtd_carrinho_aux = []
+                        this.model = []
+                        this.initialize()
+                    },
+
+                    async pesq_prod() {
+
+                        this.inicio_add_prod = 20
+
+                        /*   if (this.model != null) {
+                               this.selec_prod()
+                           }*/
+                        this.model = []
+                        
+                        //listar_estoques = await axios.get(this.url + '/api/produtos/listar/produtos_nome?Nome=' + this.prod_descricao + '&Check_estoque_minimo=2' + '&fk_empresa=' + data[0].id)
+                        
+                        var { data, error } = await supabase
+                            .from('produtos')
+                            .select()
+                            .eq('fk_empresa', this.id_empresa)
+                            .ilike('produto', '%' + this.prod_descricao + '%')
+                            .order('cod_prod', { ascending: true })
+                            listar_estoques = data
+                        
+                        if (listar_estoques.length > 0) {
+                            if (listar_estoques.length <= 20) {
+                                document.getElementById('minhaDiv_addprod').style.display = 'none';
+                                fim = listar_estoques.length
+                            } else {
+                                document.getElementById('minhaDiv_addprod').style.display = 'block';
+                                fim = 20
+                            }
+                            this.items = []
+                            var i;
+                            for (i = 0; i < fim; i++) {
+
+                                this.items.push(
+                                    {
+                                        nome: listar_estoques[i].produto,
+                                        valor: listar_estoques[i].valor.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'}),
+                                        valor_numero: listar_estoques[i].valor,
+                                        src: listar_estoques[i].foto_produto,
+                                        ingredientes: listar_estoques[i].ingredientes,
+                                    }
+                                )
+
+                                if (this.dados_produtos.findIndex(({ id }) => id === listar_estoques[i].id) != -1) {
+                                    this.model.push(i)
+                                }
+                            }
+                        } else {
+                            this.items = []
+                        }
+                        if (this.model != null) {
+                            this.qtd_carrinho_aux = this.model
+                        }
+
+                        /* if (this.prod_descricao != '') {
+                             this.titulo_categoria = 'Resultados para “' + this.prod_descricao + '”'
+                         } else {
+                             this.titulo_categoria = 'Todos'
+                         }*/
+
+                        this.drawer = false
+
+                        this.pesquisou = true
+
+                        this.model_categoria = null
+
+                    },
+
+                    abrir_dialog() {
+
+                        this.taxa_entrega = parseFloat(listar_empresa[0].taxa_entrega).toLocaleString('pt-br', { style: 'decimal', minimumFractionDigits: 2 });
+
+                        if (this.qtd_carrinho == 0) {
+                            this.dialog_carrinho_vazio = true
+                        } else {
+                            this.dialog = true
+                            //this.selec_prod()
+                            this.limit_prod()
+                            var i;
+                            for (i = 0; i < this.dados_produtos.length; i++) {
+
+
+                                // VERIFICA SE O VALOR DO PRODUTO É MAIOR QUE 1000 PARA FORMATAR O VALOR CORRETAMENTE
+                                if (parseInt(this.dados_produtos[i].total.toString().replaceAll(",", "").replaceAll(".", "").slice(2, this.dados_produtos[i].length).length) > 5) {
+                                    sub_total = this.dados_produtos[i].total.toString().replace(".", "");
+                                } else {
+                                    sub_total = this.dados_produtos[i].total
+                                }
+
+                                this.soma = this.soma + parseFloat(sub_total.substring(3, this.dados_produtos[i].total.length).replace(",", "."))
+                            }
+
+                            this.totalpedido = 'TOTAL: ' + this.soma.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' })
+                            this.soma = 0
+                        }
+                    },
+
+                    async comprar() {
+
+                        //this.desativa_btncompra = true
+
+
+                       /* item_selec = this.model
+                        produto = ""
+                        soma = 0
+
+                        data_agenda = new Date().toLocaleDateString()
+                        dia = data_agenda.slice(0, 2);
+                        mes = data_agenda.slice(3, 5);
+                        ano = data_agenda.slice(6, 10);
+                        let hora_atual = ("0" + new Date().getHours()).slice(-2) + ':' + new Date().getMinutes()
+
+                        data_agenda = ano + "-" + mes + "-" + dia + " " + hora_atual
+                        */
+                        // Salva pedidos na agenda
+                        //salvar_resq = await axios.post(this.url + '/api/pedidos/pedidos/salvar?desc_ataca=0&prec_custo=0&bairro=' + this.bairro_cli + '&data=' + data_agenda + '&concluir=0' + '&endereco=' + this.end_cli + ', ' + this.endnum_cli + '&cidade=' + this.cidade + '&celular=' + this.cel_cli + '&descricao=&cliente=(AGENDADO PELO CLIENTE) ' + this.nome_cli + '&fk_cod_cli=null&Fk_empresa=' + data[0].id + '&fk_funcionario=14&concluido_por=null&prazo=0&parcelas=null&data_vencimento=null&forma_pagamento=Dinheiro')
+
+                        //listar_maior_id_pedido = await axios.get(this.url + '/api/pedidos/pedidos/maior_id?Fk_empresa=' + data[0].id)
+
+                        /*
+                        var i;
+                        for (i = 0; i < this.dados_produtos.length; i++) {
+
+                            //produto = produto + this.dados_produtos[i].qtd + " " + this.dados_produtos[i].produto + " " + this.dados_produtos[i].preco + "%0A"
+
+                            // VERIFICA SE O VALOR DO PRODUTO É MAIOR QUE 1000 PARA FORMATAR O VALOR CORRETAMENTE
+                            if (parseInt(this.dados_produtos[i].preco.toString().replaceAll(",", "").replaceAll(".", "").slice(2, this.dados_produtos[i].length).length) > 5) {
+                                this.dados_produtos[i].preco = this.dados_produtos[i].preco.toString().replace(".", "");
+                            }
+
+                            // VERIFICA SE O VALOR DO PRODUTO É MAIOR QUE 1000 PARA FORMATAR O VALOR CORRETAMENTE
+                            if (parseFloat(this.dados_produtos[i].custo.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                this.dados_produtos[i].custo = this.dados_produtos[i].custo.toString().replace(".", "");
+                            }
+
+                            precototal_prod = this.dados_produtos[i].total.slice(3, this.dados_produtos[i].total.toString().length);
+
+                            // VERIFICA SE O VALOR DO PRODUTO É MAIOR QUE 1000 PARA FORMATAR O VALOR CORRETAMENTE
+                            if (parseInt(precototal_prod.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                precototal_prod = precototal_prod.toString().replace(".", "");
+                            }
+
+                            //custo_prod = this.dados_produtos[i].custo.toString().replace(",", ".");
+                            preco_prod = this.dados_produtos[i].preco.toString().replace(",", ".").slice(3, this.dados_produtos[i].preco.toString().length);
+                            precototal_prod = precototal_prod.replace(",", ".")
+
+                            soma = soma + parseFloat(precototal_prod.toString().replace(",", "."));
+
+                            id_pedido = listar_maior_id_pedido.data[0].id
+
+                            salvar_resq = await axios.post(this.url + '/api/produtos_pedidos/produtos_pedidos/salvar?nome=' + this.dados_produtos[i].produto + '&qtd=' + this.dados_produtos[i].qtd + '&valor_unitario=' + preco_prod + '&valor_total=' + precototal_prod + '&fk_pedido=' + id_pedido + '&cod_prod=' + this.dados_produtos[i].id + '&Fk_empresa=' + data[0].id + '&custo=' + custo_prod)
+                        }*/
+                        //produto = produto + "%0A" + "TOTAL: " + soma.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' });
+
+                        //dados_entrega = 'CLIENTE: ' + this.nome_cli + "%0A" + 'Celular: ' + this.cel_cli + "%0A" + 'Endereço: ' + this.end_cli + ", " + this.endnum_cli + "%0A" + 'Bairro: ' + this.bairro_cli + "%0A" + 'Cidade: ' + this.cidade + "%0A" + "%0A"
+
+                        this.dialog = false
+
+                        this.snackbar = true
+                        this.text_aviso = 'Compra realizada com sucesso !'
+                        this.cor_aviso = "success"
+                        this.icon = "mdi-checkbox-marked-circle"
+
+                        window.open('https://api.whatsapp.com/send?phone=+55' + listar_empresa[0].telefone.replace(/[^0-9]/g, '') + '&text=' + this.conf_pedido.replaceAll('\n', '%0A') /*dados_entrega + produto*/);
+
+                        //window.addEventListener("blur", function () {
+                            //this.dialog_final_compra = true
+                            //this.desativa_btncompra = false
+                        //});
+
+
+
+                    },
+
+                    async add_prod() {
+                        this.carregando = true
+
+                       /* if (this.model_categoria != null) {
+                            listar_estoques = await axios.get(this.url + '/api/produtos/listar/produtos_catalogo_categoria?primeiro_acesso=false&Fk_empresa=' + data[0].id + '&categoria=' + item_selecionado)
+                        } else if (this.pesquisou == false) {
+                            listar_estoques = await axios.get(this.url + '/api/produtos/listar/produtos_catalogo?primeiro_acesso=false&Fk_empresa=' + data[0].id)
+                        } else {
+                            this.pesquisou = false
+                        }*/
+
+                        var i;
+                        for (i = this.inicio_add_prod; i < this.inicio_add_prod + 48; i++) {
+
+                            if (i > listar_estoques.length) {
+                                document.getElementById('minhaDiv_addprod').style.display = 'none';
+                                break
+                            }
+
+                            if (this.items.length != listar_estoques.length) {
+                                this.items.push(
+                                    {
+                                        nome: listar_estoques[i].produto,
+                                        valor: listar_estoques[i].valor.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'}),
+                                        valor_numero: listar_estoques[i].valor,
+                                        src: listar_estoques[i].foto_produto,
+                                    }
+                                )
+                                if (this.dados_produtos.findIndex(({ id }) => id === listar_estoques[i].id) != -1) {
+                                    this.model.push(i)
+                                }
+                            }
+                        }
+
+                        this.inicio_add_prod = i
+                        this.carregando = false
+                    },
+
+                    limit_prod() {
+                        this.items = this.items.slice(0, 20)
+                        document.getElementById('minhaDiv_addprod').style.display = 'block';
+                    },
+
+                    fechar_dialog() {
+                        this.dialog = false
+                    },
+
+                    async initialize() {
+
+                        this.inicio_add_prod = 20
+
+                        this.carregando = true
+
+                        var { data, error } = await supabase
+                        .from('empresa')
+                        .select()
+                        .eq('id', this.id_empresa)
+                        
+                        //listar_empresa_nome_link = await axios.get(this.url + '/api/empresa_config/listar/empresa_nome_link?nome_link=' + window.location.href.slice(8, window.location.href.length - 1))
+
+                        listar_empresa = data
+
+                        this.src_logo = listar_empresa[0].logo
+                        this.nome_empresa = listar_empresa[0].nome
+                        this.endereco_empresa = listar_empresa[0].endereco
+
+                        //listar_categoria = await axios.get(this.url + '/api/categorias/listar/categorias?Fk_empresa=' + id_empresa)
+                        
+                        var { data, error } = await supabase
+                        .from('categorias')
+                        .select()
+                        .eq('fk_empresa', this.id_empresa)
+
+                        listar_categoria = data
+                        
+                        this.itens_categoria = []
+                        for (var i = 0; i < listar_categoria.length; i++) {
+                            this.itens_categoria.push(
+                                {
+                                    id_categoria: listar_categoria[i].id,
+                                    nome_categoria: listar_categoria[i].nome,
+                                    imagem: listar_categoria[i].imagem,
+                                })
+                        }
+
+                        this.items = []
+
+                        if (this.model_categoria != null) {
+                            this.titulo_categoria = this.itens_categoria[this.model_categoria].nome_categoria
+                            this.titulo_categoria = this.titulo_categoria.substring(0, 1).toUpperCase() + this.titulo_categoria.substring(1, this.titulo_categoria.length).toLowerCase()
+                        } else {
+                            this.titulo_categoria = ''//'Todos os produtos'
+                        }
+
+                        if (this.model_categoria != null) {
+                            item_selecionado = this.itens_categoria[this.model_categoria].id_categoria
+                            
+                            var { data, error } = await supabase
+                            .from('produtos')
+                            .select()
+                            .eq('fk_empresa', this.id_empresa)
+                            .eq('fk_categoria', item_selecionado)
+                            .order('cod_prod', { ascending: true })
+                            listar_estoques = data
+                        } else {
+                            var { data, error } = await supabase
+                            .from('produtos')
+                            .select()
+                            .eq('fk_empresa', this.id_empresa)
+                            .order('cod_prod', { ascending: true })
+                            listar_estoques = data
+                        }
+              
+                        if (listar_estoques.length <= 20) {
+                            document.getElementById('minhaDiv_addprod').style.display = 'none';
+                            fim = listar_estoques.length
+                        } else {
+                            document.getElementById('minhaDiv_addprod').style.display = 'block';
+                            fim = 20
+                        }
+
+                        var i;
+                        for (i = 0; i < fim; i++) { ///listar_estoques.length
+                            
+                            if(listar_estoques[i].ingredientes == null){
+                                ingredientes = ''
+                            }else{
+                                ingredientes = listar_estoques[i].ingredientes
+                            }
+                            this.items.push(
+                                {
+                                    nome: listar_estoques[i].produto,
+                                    valor: listar_estoques[i].valor.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'}),
+                                    valor_numero: listar_estoques[i].valor,
+                                    src: listar_estoques[i].foto_produto,
+                                    ingredientes: ingredientes
+                                }
+                            )
+
+                            if (this.dados_produtos.findIndex(({ id }) => id === listar_estoques[i].id) != -1) {
+                                this.model.push(i)
+                            }
+                        }
+
+                        this.carregando = false
+
+                        if (this.model != null) {
+                            this.qtd_carrinho_aux = this.model
+                        }
+                    }
+                },
+
+            })
+
+
+    </script>
+
+</body>
+
+</html>

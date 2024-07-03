@@ -1,0 +1,2629 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="imagem/png" href="https://i.ibb.co/Cwbt6V2/LOGO-2.png" />
+    <meta charset="utf-8" />
+    <title>Softenter</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui" />
+    <style>
+        #app {
+            background-color: lightblue;
+        }
+
+        .fieldset-border {
+            border: 2px groove #ddd !important;
+            border-radius: 20px;
+            padding: 0 1.4em 1.4em 1.4em !important;
+            margin: 0 0 1.5em 0 !important;
+            -webkit-box-shadow: 0px 0px 0px 0px #000;
+            box-shadow: 0px 0px 0px 0px #000;
+        }
+
+            .fieldset-border .legend-border {
+                font-size: 1.2em !important;
+                text-align: left !important;
+                width: auto;
+                padding: 0 10px;
+                border-bottom: none;
+            }
+
+        #comp_img {
+            border-radius: 50%;
+            border: 1px solid #000;
+        }
+
+        #comp_img_cadprod {
+            border-radius: 50%;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="https://unpkg.com/axios@1.0.0/dist/axios.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/v-mask/dist/v-mask.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.4.1/jspdf.debug.js" integrity="sha384-THVO/sM0mFD9h7dfSndI6TS0PgAGavwKvB5hAxRRvc0o9cPLohB0wb/PTA7LdUHs" crossorigin="anonymous"></script>
+    <script src="compressjs.js"></script>
+
+    <div id="app">
+        <v-app id="inspire">
+
+            <div>
+                <v-toolbar dark
+                           prominent
+                           height=110
+                           src="https://i.ibb.co/Kjzrjgx/cozz.png">
+
+                    <template v-slot:img="{ props }">
+                        <v-img v-bind="props"
+                               gradient="to right, #1672C4, #1672C4CC, #1672C4CC, #3141D6CC, #3141D6CC"></v-img>
+                    </template>
+
+                    <v-toolbar-title>{{nome_empresa}}</v-toolbar-title>
+
+
+                    <template v-slot:extension>
+                        <v-tabs align-with-title>
+                            <v-btn color="#FFFFFF" text small onclick="window.location.href = 'produtos_cardapio.html'"> <v-icon dark left>mdi-food-variant</v-icon> Itens do Cardápio </v-btn>
+
+                            <v-btn :disabled="disabled_sem_perm" text small onclick="window.location.href = 'config.html'"> <v-icon dark left>mdi-cogs</v-icon> Configurações </v-btn>
+                        </v-tabs>
+                    </template>
+
+                </v-toolbar>
+                
+            </div>
+
+            <v-snackbar timeout="2000"
+                        centered
+                        elevation="24"
+                        vertical
+                        v-model="snackbar"
+                        :color="cor_aviso">
+                <v-icon left>mdi-check-circle</v-icon>
+                {{ text_aviso }}
+            </v-snackbar>
+
+            <v-data-table :headers="headers"
+                          :items="dados_tabela"
+                          sort-by="calories"
+                          class="elevation-1"
+                          mobile-breakpoint="0"
+                          :footer-props="{'items-per-page-text':'Linhas por página'}">
+                <template v-slot:top>
+                    <v-toolbar class="mb-2"
+                               color="#1E88E5"
+                               dark
+                               flat>
+
+                        <v-toolbar-title><v-icon dark left>mdi-food-variant</v-icon> Itens do Cardápio </v-toolbar-title>
+
+                        <v-divider class="mx-4"
+                        inset
+                        vertical></v-divider>
+
+                        <v-spacer></v-spacer>
+
+                        <v-dialog v-model="dialog"
+                                  persistent
+                                  eager
+                                  max-width="600px">
+                            <template v-slot:activator="{ on, attrs }">
+
+                                <v-btn icon fab color="white" dark class="mb-2" v-bind="attrs" v-on="on" x-large>
+
+                                    <v-icon x-large>mdi-plus-circle</v-icon>
+                                </v-btn>
+
+                                <v-divider class="mx-4" inset vertical></v-divider>
+                                <v-dialog v-model="dialog_pesq"
+                                          width="500">
+                                    <template v-slot:activator="{ on, attrs_dialog_pesq }">
+                                        <v-btn icon
+                                               fab
+                                               color="white"
+                                               v-bind="attrs_dialog_pesq"
+                                               v-on="on">
+                                            <v-icon>mdi-magnify</v-icon>
+                                        </v-btn>
+                                    </template>
+
+                                    <v-card>
+                                        <v-card-title class="headline grey lighten-2">
+                                            Pesquisar
+                                            <v-spacer></v-spacer>
+                                            <v-btn small
+                                                   icon
+                                                   color="black"
+                                                   @click="dialog_pesq = false">
+                                                <v-icon>mdi-close</v-icon>
+                                            </v-btn>
+                                        </v-card-title>
+                                        <br>
+                                        <v-card-text>
+                                            <!--<v-row dense>
+                                                <v-col cols="12" sm="12">
+                                                    <v-checkbox v-model="filtrar_vencidos"
+                                                                color="success"
+                                                                label="Exibir apenas produtos vencidos ou próximos"></v-checkbox>
+                                                </v-col>
+                                            </v-row>-->
+                                            <v-row dense>
+                                                <v-col cols="4" sm="4">
+                                                    <v-text-field v-model="id_pesq" label="Código" outlined></v-text-field>
+                                                </v-col>
+                                                <v-col cols="8" sm="8">
+                                                    <v-text-field v-model="nome_pesq" label="Nome do Prato" outlined></v-text-field>
+                                                </v-col>
+                                            </v-row>
+
+                                        </v-card-text>
+
+                                        <v-divider></v-divider>
+
+                                        <v-card-actions>
+                                            <v-spacer></v-spacer>
+                                            <v-btn color="primary"
+                                                   text
+                                                   @click="pesquisar()">
+                                                <v-icon left>mdi-magnify</v-icon>
+                                                Pesquisar
+                                            </v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </v-dialog>
+
+                                <v-btn icon
+                                       color="white"
+                                       @click="imprimir()">
+                                    <v-icon>mdi-printer</v-icon>
+                                </v-btn>
+
+                                <!--CADASTRO DE CATEGORIAS-->
+                                <v-dialog v-model="dialog_categorias"
+                                          persistent
+                                          eager
+                                          max-width="700px">
+
+                                    <v-system-bar color="#1E88E5"
+                                                  height="30"
+                                                  dark>
+                                        <v-spacer></v-spacer>
+                                        <v-btn small
+                                               icon
+                                               color="black"
+                                               @click="dialog_categorias = false">
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </v-system-bar>
+
+                                    <template v-slot:activator="{ on, attrs_categorias }">
+                                        <v-btn icon
+                                               fab
+                                               color="white"
+                                               v-bind="attrs_categorias"
+                                               v-on="on"
+                                               title="Cadastro de categorias">
+                                            <v-icon>mdi-dots-horizontal-circle-outline</v-icon>
+                                        </v-btn>
+                                    </template>
+
+                                    <v-dialog persistent width="200" v-model="carregando">
+                                        <v-card color="primary"
+                                                dark>
+                                            <v-card-text>
+                                                Carregando... Aguarde !
+                                                <v-progress-linear indeterminate
+                                                                   color="white"
+                                                                   class="mb-0">
+                                                </v-progress-linear>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-dialog>
+
+                                    <v-data-table :headers="headers_categorias"
+                                                  :items="categorias"
+                                                  mobile-breakpoint="0"
+                                                  class="elevation-1"
+                                                  :footer-props="{'items-per-page-text':'Linhas por página'}">
+                                        <template v-slot:top>
+                                            <v-toolbar class="mb-2"
+                                                       color="#1E88E5"
+                                                       dark
+                                                       flat>
+
+                                                <v-toolbar-title>
+                                                    <h3>Categorias</h3>
+                                                </v-toolbar-title>
+
+                                                <v-spacer></v-spacer>
+
+                                                <v-dialog eager v-model="dialog_categorias_cad"
+                                                          max-width="500px">
+                                                    <template v-slot:activator="{ on, attrs_categorias }">
+
+                                                        <v-btn icon
+                                                               color="white"
+                                                               v-bind="attrs_categorias"
+                                                               v-on="on">
+                                                            <v-icon large>mdi-plus-circle</v-icon>
+                                                        </v-btn>
+
+                                                        <v-divider class="mx-4" inset vertical></v-divider>
+
+                                                        <v-dialog v-model="dialog_pesq_categorias"
+                                                                  width="500">
+                                                            <template v-slot:activator="{ on, attrs_dialog_pesq_categorias }">
+                                                                <v-btn icon
+                                                                       fab
+                                                                       color="white"
+                                                                       v-bind="attrs_dialog_pesq_categorias"
+                                                                       v-on="on">
+                                                                    <v-icon>mdi-magnify</v-icon>
+                                                                </v-btn>
+                                                            </template>
+
+                                                            <v-card>
+                                                                <v-card-title class="headline grey lighten-2">
+                                                                    Pesquisar
+                                                                    <v-spacer></v-spacer>
+                                                                    <v-btn small
+                                                                           icon
+                                                                           color="black"
+                                                                           @click="dialog_pesq_categorias = false">
+                                                                        <v-icon>mdi-close</v-icon>
+                                                                    </v-btn>
+                                                                </v-card-title>
+                                                                <br>
+                                                                <v-card-text>
+                                                                    <v-row dense>
+                                                                        <v-col cols="12" sm="12">
+                                                                            <v-text-field autofocus v-model="nome_pesq_categorias" label="Nome da categoria" outlined></v-text-field>
+                                                                        </v-col>
+                                                                    </v-row>
+
+                                                                </v-card-text>
+
+                                                                <v-divider></v-divider>
+
+                                                                <v-card-actions>
+                                                                    <v-spacer></v-spacer>
+                                                                    <v-btn color="primary"
+                                                                           text
+                                                                           @click="pesquisar_categorias()">
+                                                                        <v-icon left>mdi-magnify</v-icon>
+                                                                        Pesquisar
+                                                                    </v-btn>
+                                                                </v-card-actions>
+                                                            </v-card>
+                                                        </v-dialog>
+                                                    </template>
+                                                    <v-card>
+                                                        <v-card-title>
+                                                            <span class="headline">{{ formTitle_categorias }}</span>
+                                                        </v-card-title>
+
+                                                        <v-card-text>
+                                                            <v-container>
+                                                                <v-row dense>
+                                                                    <v-col cols="12"
+                                                                           sm="12">
+                                                                        <v-text-field autofocus v-model="editedItem_categorias.nome"
+                                                                                      label="Nome" outlined></v-text-field>
+                                                                    </v-col>
+                                                                </v-row>
+                                                                <v-row dense>
+                                                                    <v-col cols="6" sm="6">
+
+
+                                                                        <div class="card col-sm-12 col-xs-12 col-lg-10 col-md-10 push-lg-1 push-md-1 comp_img_container">
+                                                                            <div class="img-con" title="Imagem"><img src="https://i.ibb.co/n1g2HRY/addimagem.jpg" alt="" id="comp_img" class="img-fluid" width="120" height="120"></div>
+                                                                            <div class="btn-group" id="controls">
+                                                                                <label class="btn btn-primary" title="select an image (jpeg, png)">
+                                                                                    <span id="comp_file_selector"><span class="fa fa-image"></span></span>
+                                                                                    <input type="file" name="file" id="input_cmprss" onchange="encode();">
+                                                                                </label>
+                                                                                <a href="" download="file" id="comp_download" class="btn btn-primary"></a>
+                                                                            </div>
+                                                                        </div>
+                                                                    </v-col>
+                                                                </v-row>
+                                                                <v-alert type="error" :value="erro_categorias">
+                                                                    Erro: Campo obrigatório
+                                                                </v-alert>
+                                                            </v-container>
+                                                        </v-card-text>
+
+                                                        <v-card-actions>
+                                                            <v-spacer></v-spacer>
+                                                            <v-btn color="#E57373"
+                                                                   text
+                                                                   @click="close_categorias">
+                                                                <v-icon left>
+                                                                    mdi-close-octagon
+                                                                </v-icon>
+                                                                Cancelar
+                                                            </v-btn>
+                                                            <v-btn color="success"
+                                                                   text
+                                                                   @click="save_categorias">
+                                                                <v-icon left>
+                                                                    mdi-content-save-outline
+                                                                </v-icon>
+                                                                Salvar
+                                                            </v-btn>
+                                                        </v-card-actions>
+                                                    </v-card>
+                                                </v-dialog>
+                                                <v-dialog v-model="dialogDelete" max-width="500px">
+                                                    <v-card>
+                                                        <v-card-title class="headline">Deseja deletar esta categoria?</v-card-title>
+                                                        <v-card-actions_prod>
+                                                            <v-spacer></v-spacer>
+                                                            <v-btn color="blue darken-1" text @click="closeDelete">Cancelar</v-btn>
+                                                            <v-btn color="blue darken-1" text @click="deleteItemConfirm">Sim</v-btn>
+                                                            <v-spacer></v-spacer>
+                                                        </v-card-actions_prod>
+                                                    </v-card>
+                                                </v-dialog>
+                                            </v-toolbar>
+                                        </template>
+                                        <template v-slot:item.actions_prod="{ item }">
+                                            <v-icon small
+                                                    class="mr-2"
+                                                    @click="editItem_categorias(item)">
+                                                mdi-pencil
+                                            </v-icon>
+
+                                            <v-icon small
+                                                    color="red"
+                                                    @click="deleteItem_categorias(item)">
+                                                mdi-close
+                                            </v-icon>
+                                        </template>
+                                        <template v-slot:no-data>
+                                            <v-alert :value="true">
+                                                Sem resultados a exibir
+                                            </v-alert>
+                                        </template>
+
+
+                                    </v-data-table>
+
+                                </v-dialog>
+
+                                <!--CADASTRO DE ADICIONAIS-->
+                                <v-dialog v-model="dialog_adicionais"
+                                          persistent
+                                          eager
+                                          max-width="700px">
+
+                                    <v-system-bar color="#1E88E5"
+                                                  height="30"
+                                                  dark>
+                                        <v-spacer></v-spacer>
+                                        <v-btn small
+                                               icon
+                                               color="black"
+                                               @click="dialog_adicionais = false">
+                                            <v-icon>mdi-close</v-icon>
+                                        </v-btn>
+                                    </v-system-bar>
+
+                                    <template v-slot:activator="{ on, attrs_adicionais }">
+                                        <v-btn icon
+                                               fab
+                                               color="white"
+                                               v-bind="attrs_adicionais"
+                                               v-on="on"
+                                               title="Cadastro de Adicionais">
+                                            <v-icon>mdi-layers-plus</v-icon>
+                                        </v-btn>
+                                    </template>
+
+                                    <v-dialog persistent width="200" v-model="carregando">
+                                        <v-card color="primary"
+                                                dark>
+                                            <v-card-text>
+                                                Carregando... Aguarde !
+                                                <v-progress-linear indeterminate
+                                                                   color="white"
+                                                                   class="mb-0">
+                                                </v-progress-linear>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-dialog>
+
+                                    <v-data-table :headers="headers_adicionais"
+                                                  :items="adicionais"
+                                                  mobile-breakpoint="0"
+                                                  class="elevation-1"
+                                                  :footer-props="{'items-per-page-text':'Linhas por página'}">
+                                        <template v-slot:top>
+                                            <v-toolbar class="mb-2"
+                                                       color="#1E88E5"
+                                                       dark
+                                                       flat>
+
+                                                <v-toolbar-title>
+                                                    <h3>Adicionais</h3>
+                                                </v-toolbar-title>
+
+                                                <v-spacer></v-spacer>
+
+                                                <v-dialog eager v-model="dialog_adicionais_cad"
+                                                          max-width="500px">
+                                                    <template v-slot:activator="{ on, attrs_adicionais }">
+
+                                                        <v-btn icon
+                                                               color="white"
+                                                               v-bind="attrs_adicionais"
+                                                               v-on="on">
+                                                            <v-icon large>mdi-plus-circle</v-icon>
+                                                        </v-btn>
+
+                                                        <v-divider class="mx-4" inset vertical></v-divider>
+
+                                                    </template>
+                                                    <v-card>
+                                                        <v-card-title>
+                                                            <span class="headline">{{ formTitle_adicionais }}</span>
+                                                        </v-card-title>
+
+                                                        <v-card-text>
+                                                            <v-container>
+                                                                <v-row dense>
+                                                                    <v-col cols="12"
+                                                                           sm="12">
+                                                                        <v-text-field v-model="editedItem_adicionais.nome"
+                                                                                      label="Titulo" outlined></v-text-field>
+                                                                    </v-col>
+                                                                </v-row>
+
+                                                                <v-data-table :headers="headers_itens_adicionais"
+                                                                              :items="itens_adicionais"
+                                                                              mobile-breakpoint="0"
+                                                                              class="elevation-1"
+                                                                              :footer-props="{'items-per-page-text':'Linhas por página'}">
+                                                                    <template v-slot:top>
+                                                                        <v-toolbar class="mb-2"
+                                                                                   color="#1E88E5"
+                                                                                   dark
+                                                                                   flat>
+
+                                                                            <v-toolbar-title>
+                                                                                <h3>Adicionais</h3>
+                                                                            </v-toolbar-title>
+
+                                                                            <v-spacer></v-spacer>
+
+                                                                            <v-dialog eager v-model="dialog_itens_adicionais_cad"
+                                                                                      max-width="500px">
+                                                                                <template v-slot:activator="{ on, attrs_itens_adicionais }">
+
+                                                                                    <v-btn icon
+                                                                                           color="white"
+                                                                                           v-bind="attrs_itens_adicionais"
+                                                                                           v-on="on">
+                                                                                        <v-icon large>mdi-plus-circle</v-icon>
+                                                                                    </v-btn>
+
+                                                                                    <v-divider class="mx-4" inset vertical></v-divider>
+
+                                                                                </template>
+                                                                                <v-card>
+                                                                                    <v-card-title>
+                                                                                        <span class="headline">{{ formTitle_itens_adicionais }}</span>
+                                                                                    </v-card-title>
+
+                                                                                    <v-card-text>
+                                                                                        <v-container>
+                                                                                            <v-row dense>
+                                                                                                <v-col cols="12"
+                                                                                                       sm="12">
+                                                                                                    <v-text-field v-model="editedItem_itens_adicionais.nome"
+                                                                                                                  label="Nome do Adicional" outlined></v-text-field>
+                                                                                                </v-col>
+                                                                                            </v-row>
+                                                                                            <v-row dense>
+                                                                                                <v-col cols="6"
+                                                                                                       sm="6">
+                                                                                                    <v-text-field v-model="editedItem_itens_adicionais.preco"
+                                                                                                                  label="Preço" outlined></v-text-field>
+                                                                                                </v-col>
+                                                                                            </v-row>
+                                                                                            <v-alert type="error" :value="erro_adicionais">
+                                                                                                Erro: Campo obrigatório
+                                                                                            </v-alert>
+                                                                                        </v-container>
+                                                                                    </v-card-text>
+
+                                                                                    <v-card-actions>
+                                                                                        <v-spacer></v-spacer>
+                                                                                        <v-btn color="#E57373"
+                                                                                               text
+                                                                                               @click="close_itens_adicionais">
+                                                                                            <v-icon left>
+                                                                                                mdi-close-octagon
+                                                                                            </v-icon>
+                                                                                            Cancelar
+                                                                                        </v-btn>
+                                                                                        <v-btn color="success"
+                                                                                               text
+                                                                                               @click="save_itens_adicionais">
+                                                                                            <v-icon left>
+                                                                                                mdi-content-save-outline
+                                                                                            </v-icon>
+                                                                                            Salvar
+                                                                                        </v-btn>
+                                                                                    </v-card-actions>
+                                                                                </v-card>
+                                                                            </v-dialog>
+                                                                            <v-dialog v-model="dialogDelete" max-width="500px">
+                                                                                <v-card>
+                                                                                    <v-card-title class="headline">Deseja deletar este adicional ?</v-card-title>
+                                                                                    <v-card-actions_prod>
+                                                                                        <v-spacer></v-spacer>
+                                                                                        <v-btn color="blue darken-1" text @click="closeDelete">Cancelar</v-btn>
+                                                                                        <v-btn color="blue darken-1" text @click="deleteItemConfirm">Sim</v-btn>
+                                                                                        <v-spacer></v-spacer>
+                                                                                    </v-card-actions_prod>
+                                                                                </v-card>
+                                                                            </v-dialog>
+                                                                        </v-toolbar>
+                                                                    </template>
+                                                                    <template v-slot:item.actions_prod="{ item }">
+                                                                        <v-icon small
+                                                                                class="mr-2"
+                                                                                @click="editItem_itens_adicionais(item)">
+                                                                            mdi-pencil
+                                                                        </v-icon>
+
+                                                                        <v-icon small
+                                                                                color="red"
+                                                                                @click="deleteItem_itens_adicionais(item)">
+                                                                            mdi-close
+                                                                        </v-icon>
+                                                                    </template>
+                                                                    <template v-slot:no-data>
+                                                                        <v-alert :value="true">
+                                                                            Sem resultados a exibir
+                                                                        </v-alert>
+                                                                    </template>
+
+                                                                </v-data-table>
+
+                                                                <v-alert type="error" :value="erro_adicionais">
+                                                                    Erro: Campo obrigatório
+                                                                </v-alert>
+                                                            </v-container>
+                                                        </v-card-text>
+
+                                                        <v-card-actions>
+                                                            <v-spacer></v-spacer>
+                                                            <v-btn color="#E57373"
+                                                                   text
+                                                                   @click="close_adicionais">
+                                                                <v-icon left>
+                                                                    mdi-close-octagon
+                                                                </v-icon>
+                                                                Cancelar
+                                                            </v-btn>
+                                                            <v-btn color="success"
+                                                                   text
+                                                                   @click="save_adicionais">
+                                                                <v-icon left>
+                                                                    mdi-content-save-outline
+                                                                </v-icon>
+                                                                Salvar
+                                                            </v-btn>
+                                                        </v-card-actions>
+                                                    </v-card>
+                                                </v-dialog>
+                                                <v-dialog v-model="dialogDelete" max-width="500px">
+                                                    <v-card>
+                                                        <v-card-title class="headline">Deseja deletar este adicional ?</v-card-title>
+                                                        <v-card-actions_prod>
+                                                            <v-spacer></v-spacer>
+                                                            <v-btn color="blue darken-1" text @click="closeDelete">Cancelar</v-btn>
+                                                            <v-btn color="blue darken-1" text @click="deleteItemConfirm">Sim</v-btn>
+                                                            <v-spacer></v-spacer>
+                                                        </v-card-actions_prod>
+                                                    </v-card>
+                                                </v-dialog>
+                                            </v-toolbar>
+                                        </template>
+                                        <template v-slot:item.actions_prod="{ item }">
+                                            <v-icon small
+                                                    class="mr-2"
+                                                    @click="editItem_adicionais(item)">
+                                                mdi-pencil
+                                            </v-icon>
+
+                                            <v-icon small
+                                                    color="red"
+                                                    @click="deleteItem_adicionais(item)">
+                                                mdi-close
+                                            </v-icon>
+                                        </template>
+                                        <template v-slot:no-data>
+                                            <v-alert :value="true">
+                                                Sem resultados a exibir
+                                            </v-alert>
+                                        </template>
+
+
+                                    </v-data-table>
+
+                                </v-dialog>
+
+                                <v-dialog v-model="dialog_lanc_prod"
+                                          persistent
+                                          eager
+                                          max-width="700px">
+                                    <!--<template v-slot:activator="{ on, attrs_dialog_lanc_prod }">
+            <v-btn icon
+                   fab
+                   color="white"
+                   v-bind="attrs_dialog_lanc_prod"
+                   v-on="on"
+                   title="Reposição rápida de produtos">
+                <v-icon>mdi-playlist-plus</v-icon>
+            </v-btn>
+        </template>-->
+
+                                    <v-card>
+                                        <v-card-title class="headline grey lighten-2">
+                                            <span class="headline">Reposição rápida de produtos</span>
+                                        </v-card-title>
+
+                                        <v-divider class="mx-4"
+                                                   inset></v-divider>
+
+                                        <br>
+
+                                        <v-card-text>
+
+                                            <v-dialog persistent width="200" v-model="carregando">
+                                                <v-card color="primary"
+                                                        dark>
+                                                    <v-card-text>
+                                                        Carregando... Aguarde !
+                                                        <v-progress-linear indeterminate
+                                                                           color="white"
+                                                                           class="mb-0">
+                                                        </v-progress-linear>
+                                                    </v-card-text>
+                                                </v-card>
+                                            </v-dialog>
+
+                                            <div id="Div_leitor">
+                                                <v-row dense>
+                                                    <v-col cols="6" sm="6">
+                                                        <v-text-field v-model="editedItem_prod.cod_prod"
+                                                                      autofocus
+                                                                      :error="exib_erro_cod_prod"
+                                                                      @change="preenche_prod()"
+                                                                      label="Código"
+                                                                      outlined
+                                                                      append-icon="mdi-barcode-scan"></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="3" sm="3">
+                                                        <v-text-field @change="somar_total()"
+                                                                      v-model="editedItem_prod.qtd"
+                                                                      label="Quantidade" outlined></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="3"
+                                                           sm="3">
+                                                        <v-text-field prefix="R$"
+                                                                      v-model="editedItem_prod.valor_unitario"
+                                                                      id="valor_leitor"
+                                                                      onkeyup="formatarMoeda()"
+                                                                      :error="exib_erro_valor_unitario"
+                                                                      label="Custo" outlined></v-text-field>
+
+                                                    </v-col>
+                                                </v-row>
+                                            </div>
+
+                                            <v-checkbox v-model="check_prazo"
+                                                        color="blue"
+                                                        label="A prazo">
+                                            </v-checkbox>
+
+                                            <v-data-table :headers="headers_prod"
+                                                          :items="produtos"
+                                                          sort-by="calories"
+                                                          mobile-breakpoint="0"
+                                                          class="elevation-1"
+                                                          :footer-props="{'items-per-page-text':'Linhas por página'}">
+                                                <template v-slot:top>
+                                                    <v-toolbar class="mb-2"
+                                                               color="#1E88E5"
+                                                               dark
+                                                               flat>
+
+                                                        <v-toolbar-title>
+                                                            <h3>{{ soma_prod }}</h3>
+                                                        </v-toolbar-title>
+
+                                                        <v-spacer></v-spacer>
+
+                                                        <v-dialog v-model="dialog_prod"
+                                                                  max-width="500px">
+                                                            <template v-slot:activator="{ on, attrs_prod }">
+
+                                                                <v-btn icon
+                                                                       color="white"
+                                                                       v-bind="attrs_prod"
+                                                                       v-on="on">
+                                                                    <v-icon large>mdi-plus-circle</v-icon>
+                                                                </v-btn>
+                                                                <v-divider class="mx-4"
+                                                                           inset
+                                                                           vertical></v-divider>
+                                                                <v-btn icon
+                                                                       color="white"
+                                                                       @click="imprimir_lanc_prod()">
+                                                                    <v-icon>mdi-printer</v-icon>
+                                                                </v-btn>
+
+                                                            </template>
+                                                            <v-card>
+                                                                <v-card-title>
+                                                                    <span class="headline">{{ formTitle_prod }}</span>
+                                                                </v-card-title>
+
+                                                                <v-card-text>
+                                                                    <v-container>
+
+                                                                        <v-row dense>
+                                                                            <v-col cols="12" sm="12">
+                                                                                <v-autocomplete v-model="editedItem_prod.nome"
+                                                                                                :items="items_prod"
+                                                                                                @change="somar_total()"
+                                                                                                label="Nome" outlined></v-autocomplete>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row dense>
+
+                                                                            <v-col cols="6"
+                                                                                   sm="6">
+                                                                                <v-text-field v-model="editedItem_prod.cod_prod"
+                                                                                              :error="exib_erro_cod_prod"
+                                                                                              @change="preenche_prod()"
+                                                                                              label="Código" outlined></v-text-field>
+                                                                            </v-col>
+
+                                                                            <v-col cols="6"
+                                                                                   sm="6">
+                                                                                <v-text-field @change="somar_total()" v-model="editedItem_prod.qtd"
+                                                                                              label="Quantidade" outlined></v-text-field>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-row dense>
+                                                                            <v-col cols="6"
+                                                                                   sm="6">
+                                                                                <v-text-field prefix="R$"
+                                                                                              v-model="editedItem_prod.valor_unitario"
+                                                                                              id="valor_leitor"
+                                                                                              onkeyup="formatarMoeda()"
+                                                                                              :error="exib_erro_valor_unitario"
+                                                                                              label="Custo" outlined></v-text-field>
+
+                                                                            </v-col>
+                                                                            <v-col cols="6"
+                                                                                   sm="6">
+                                                                                <v-text-field prefix="R$" readonly v-model="editedItem_prod.valor_total"
+                                                                                              label="Valor total" outlined></v-text-field>
+                                                                            </v-col>
+                                                                        </v-row>
+                                                                        <v-alert type="error" :value="erro_produtos">
+                                                                            Erro: preencha todos os campos corretamente
+                                                                        </v-alert>
+                                                                    </v-container>
+                                                                </v-card-text>
+
+                                                                <v-card-actions>
+                                                                    <v-spacer></v-spacer>
+                                                                    <v-btn color="#E57373"
+                                                                           text
+                                                                           @click="close_prod">
+                                                                        <v-icon left>
+                                                                            mdi-close-octagon
+                                                                        </v-icon>
+                                                                        Cancelar
+                                                                    </v-btn>
+                                                                    <v-btn color="success"
+                                                                           text
+                                                                           @click="save_prod">
+                                                                        <v-icon left>
+                                                                            mdi-content-save-outline
+                                                                        </v-icon>
+                                                                        Salvar
+                                                                    </v-btn>
+                                                                </v-card-actions>
+                                                            </v-card>
+                                                        </v-dialog>
+                                                        <v-dialog v-model="dialogDelete" max-width="500px">
+                                                            <v-card>
+                                                                <v-card-title class="headline">Deseja deletar esse produto?</v-card-title>
+                                                                <v-card-actions_prod>
+                                                                    <v-spacer></v-spacer>
+                                                                    <v-btn color="blue darken-1" text @click="closeDelete">Cancelar</v-btn>
+                                                                    <v-btn color="blue darken-1" text @click="deleteItemConfirm">Sim</v-btn>
+                                                                    <v-spacer></v-spacer>
+                                                                </v-card-actions_prod>
+                                                            </v-card>
+                                                        </v-dialog>
+                                                    </v-toolbar>
+                                                </template>
+                                                <template v-slot:item.actions_prod="{ item }">
+                                                    <v-icon small
+                                                            class="mr-2"
+                                                            @click="editItem_prod(item)">
+                                                        mdi-pencil
+                                                    </v-icon>
+
+                                                    <v-icon small
+                                                            color="red"
+                                                            @click="deleteItem_prod(item)">
+                                                        mdi-close
+                                                    </v-icon>
+                                                </template>
+                                                <template v-slot:no-data>
+                                                    <v-alert :value="true">
+                                                        Sem resultados a exibir
+                                                    </v-alert>
+                                                </template>
+
+                                                <template v-slot:item.valor_unitario="{ item }">
+
+                                                    R$ {{ item.valor_unitario }}
+
+                                                </template>
+
+                                                <template v-slot:item.valor_total="{ item }">
+
+                                                    R$ {{ item.valor_total }}
+
+                                                </template>
+
+
+                                            </v-data-table>
+
+                                        </v-card-text>
+
+                                        <v-divider></v-divider>
+
+                                        <v-card-actions>
+                                            <v-spacer></v-spacer>
+                                            <v-btn color="#E57373"
+                                                   text
+                                                   @click="close_lanc_prod()">
+                                                <v-icon left>
+                                                    mdi-close-octagon
+                                                </v-icon>
+                                                Cancelar
+                                            </v-btn>
+                                            <v-btn color="success"
+                                                   text
+                                                   @click="save_lanc_prod()">
+                                                <v-icon left>
+                                                    mdi-content-save-outline
+                                                </v-icon>
+                                                Salvar
+                                            </v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </v-dialog>
+
+
+                            </template>
+
+                            <v-card>
+                                <v-card-title>
+                                    <span class="headline">{{ formTitle }}</span>
+                                </v-card-title>
+
+                                <v-card-text>
+                                    <v-row dense>
+                                        <v-col cols="4" sm="4">
+                                            <v-text-field v-model="editedItem.id" :error="exib_erro" messages="Preenchimento obrigatório" label="Código" outlined v-mask="'################################################################################################################################################################################################'"></v-text-field>
+                                        </v-col>
+                                        <v-col cols="8" sm="8">
+                                            <v-text-field autofocus :error="exib_erro" messages="Preenchimento obrigatório" v-model="editedItem.nome" label="Nome do Prato" outlined></v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                    <v-row dense>
+                                        <v-col cols="12" sm="12">
+                                            <v-text-field
+                                            outlined
+                                            v-model="editedItem.ingredientes"
+                                            label="Descrição do Prato"
+                                            >  
+                                            </v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                    <v-row dense>
+                                        <v-col cols="3" sm="4">
+                                            <v-text-field prefix="R$" :error="exib_erro" messages="Preenchimento obrigatório" v-model="editedItem.preco" label="Preço" outlined></v-text-field>
+                                        </v-col>
+                                        <v-col cols="4" sm="4">
+                                            <v-select v-model="editedItem.categoria" :items="items_categoria" item-text="nome_categorias" item-value="id_categorias" label="Categoria" no-data-text="Nenhuma categoria cadastrada" outlined></v-select>
+                                        </v-col>
+                                        <v-col cols="5" sm="4">
+                                            <v-select v-model="editedItem.adicionais" :items="adicionais" item-text="nome" item-value="id" label="Adicionais" no-data-text="Nenhum adicional cadastrado" outlined></v-select>
+                                        </v-col>
+                                    </v-row>
+                                    <v-row dense>
+                                        <!--<v-col cols="12" sm="12">
+                                            <v-textarea rows="4" v-model="editedItem.descricao" label="Descrição" outlined></v-textarea>
+                                        </v-col>-->
+                                        <v-col cols="4" sm="5">
+                                            <div class="card col-sm-12 col-xs-12 col-lg-10 col-md-10 push-lg-1 push-md-1 comp_img_container_cadprod">
+                                                <div class="img-con_cadprod" title="Imagem"><img src="https://i.ibb.co/n1g2HRY/addimagem.jpg" alt="" id="comp_img_cadprod" class="img-fluid" width="120" height="120"></div>
+                                                <div class="btn-group_cadprod" id="controls_cadprod">
+                                                    <label class="btn btn-primary" title="select an image (jpeg, png)">
+                                                        <span id="comp_file_selector_cadprod"><span class="fa fa-image"></span></span>
+                                                        <input type="file" name="file" id="input_cmprss_cadprod" onchange="encode_cadprod();">
+                                                    </label>
+                                                    <a href="" download="file" id="comp_download_cadprod" class="btn btn-primary"></a>
+                                                </div>
+                                            </div>
+
+                                        </v-col>
+                                    </v-row>
+
+                                    <v-dialog persistent width="200" v-model="carregando">
+                                        <v-card color="primary"
+                                                dark>
+                                            <v-card-text>
+                                                Carregando... Aguarde !
+                                                <v-progress-linear indeterminate
+                                                                   color="white"
+                                                                   class="mb-0">
+                                                </v-progress-linear>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-dialog>
+
+                                </v-card-text>
+
+                                <v-divider></v-divider>
+
+                                <v-card-actions>
+                                    <v-spacer></v-spacer>
+                                    <v-btn color="#E57373"
+                                           text
+                                           @click="close">
+                                        <v-icon left>
+                                            mdi-close-octagon
+                                        </v-icon>
+                                        Cancelar
+                                    </v-btn>
+                                    <v-btn color="success"
+                                           text
+                                           @click="save()">
+                                        <v-icon left>
+                                            mdi-content-save-outline
+                                        </v-icon>
+                                        Salvar
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
+                        </v-toolbar>
+                    </template>
+                    <template v-slot:item.actions="{ item }">
+                        <v-icon small
+                                class="mr-2"
+                                @click="editItem(item)">
+                            mdi-pencil
+                        </v-icon>
+                        <v-icon small
+                                color="red"
+                                @click="deleteItem(item)">
+                            mdi-close
+                        </v-icon>
+                    </template>
+                    <template v-slot:no-data>
+                        <v-alert :value="true">
+                            Sem resultados a exibir
+                        </v-alert>
+                    </template>
+
+                </v-data-table>
+
+            </v-app>
+        </div>
+
+        <script>
+
+            var supabase = supabase.createClient('https://spvlqkrfmcslppubtsmu.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwdmxxa3JmbWNzbHBwdWJ0c211Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk4MzY1MjAsImV4cCI6MjAxNTQxMjUyMH0.QrkMEdFUPjXtESCHhR_BTEq061mN-Hvc9gFiXhxZN2E')
+
+            function encode() {
+
+                if (document.getElementById("input_cmprss").files.length > 0 || app.__vue__.primeiro_acesso == true) {
+                    imagem_alterou = 1
+                    app.__vue__.primeiro_acesso = false
+
+                    let comp = Compress({
+                        inputSelector: '#input_cmprss',
+                        downloadSelector: '#comp_download',
+                        imageSelector: '#comp_img',
+                        rate: 50,
+                        dimen: { width: 300, height: 300 },
+                    });
+
+
+                }
+
+            }
+
+            function encode_cadprod() {
+
+                if (document.getElementById("input_cmprss_cadprod").files.length > 0 || app.__vue__.primeiro_acesso == true) {
+                    imagem_alterou = 1
+                    app.__vue__.primeiro_acesso = false
+
+                    let comp_cadprod = Compress({
+                        inputSelector: '#input_cmprss_cadprod',
+                        downloadSelector: '#comp_download_cadprod',
+                        imageSelector: '#comp_img_cadprod',
+                        rate: 50,
+                        dimen: { width: 300, height: 300 },
+                    });
+
+
+                }
+
+            }
+
+            function leitor_cod(el) {
+                //display_leitor = document.getElementById('Div_leitor').style.display;
+
+                if (localStorage.leitor_barras == "true")
+                    document.getElementById(el).style.display = 'block';
+                else
+                    document.getElementById(el).style.display = 'none';
+            }
+
+            Vue.use(VueMask.VueMaskPlugin);
+
+            document.addEventListener('keydown', function (event) {
+                if (event.keyCode !== 13) return;
+
+                if (app.__vue__.dialog_lanc_prod == true) {
+                    app.__vue__.preenche_prod()
+                    app.__vue__.save_prod()
+                }
+            }),
+
+                new Vue({
+                    el: '#app',
+                    vuetify: new Vuetify(),
+                    data: vm => ({
+                        //url: 'https://softenter.com.br',
+                        items_tipo: ['Produto', 'Serviço'],
+                        items_categoria: [],
+                        disabled_qtd: false,
+                        show1: false,
+                        id: '',
+                        dialog_lanc_prod: false,
+                        dialog_categorias: false,
+                        dialog_adicionais: false,
+                        dialog_categorias_cad: false,
+                        dialog_adicionais_cad: false,
+                        dialog_itens_adicionais_cad: false,
+                        soma_prod: 0,
+                        exib_erro_cod_prod: false,
+                        exib_erro_valor_unitario: false,
+                        items_prod: [],
+                        dialog_prod: false,
+                        dialogDelete_prod: false,
+                        dialogDelete_categorias: false,
+                        dialogDelete_adicionais: false,
+                        menudata_vencimento: false,
+                        date_vencimento: '',
+                        exib_erro: false,
+                        snackbar: false,
+                        text_aviso: '',
+                        cor_aviso: "success",
+                        id_pesq: '',
+                        erro_produtos: false,
+                        erro_categorias: false,
+                        erro_adicionais: false,
+                        nome_pesq: '',
+                        dateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+                        show1: false,
+                        usuario: '',
+                        filtrar_vencidos: false,
+                        password: '',
+                        dialogDelete: false,
+                        dialog_login: true,
+                        disabled_sem_perm: false,
+                        dialog_pesq: false,
+                        dialog_pesq_categorias: false,
+                        carregando: false,
+                        dialog: false,
+                        check_prazo: false,
+                        primeiro_acesso: true,
+                        alterou_itens_adicionais: false,
+                        ingredientes: '',
+                        headers: [
+                            { text: 'Código', value: 'id' },
+                            { text: 'Produto', value: 'nome' },
+                            //{ text: 'Data de vencimento', align: 'center', value: 'vencimento' },
+                            //{ text: 'Quantidade', align: 'center', value: 'quantidade' },
+                            //{ text: 'Preço de Custo', align: 'center', value: 'custo' },
+                            { text: 'Preço de venda', align: 'center', value: 'preco' },
+                            { text: 'Editar/deletar', align: 'center', value: 'actions', sortable: false },
+
+                        ],
+                        headers_prod: [
+                            { text: 'Produto', value: 'nome' },
+                            { text: 'Valor unitário', value: 'valor_unitario' },
+                            { text: 'Quantidade', value: 'qtd' },
+                            { text: 'Valor total', value: 'valor_total' },
+                            { text: 'Editar/deletar', value: 'actions_prod', align: 'center', sortable: false },
+
+                        ],
+                        headers_categorias: [
+                            { text: 'Código', value: 'id' },
+                            { text: 'Nome', value: 'nome' },
+                            { text: 'Editar/deletar', value: 'actions_prod', align: 'center', sortable: false },
+
+                        ],
+                        headers_adicionais: [
+                            { text: 'Código', value: 'id' },
+                            { text: 'Nome', value: 'nome' },
+                            { text: 'Editar/deletar', value: 'actions_prod', align: 'center', sortable: false },
+
+                        ],
+                        headers_itens_adicionais: [
+                            { text: 'Código', value: 'id' },
+                            { text: 'Nome do Adicional', value: 'nome' },
+                            { text: 'Preço', value: 'preco' },
+                            { text: 'Editar/deletar', value: 'actions_prod', align: 'center', sortable: false },
+
+                        ],
+
+                        dados_tabela: [],
+                        produtos: [],
+                        categorias: [],
+                        adicionais: [],
+                        itens_adicionais: [],
+                        nome_pesq_categorias: '',
+                        editedIndex: -1,
+                        editedIndex_categorias: -1,
+                        editedIndex_adicionais: -1,
+                        editedIndex_itens_adicionais: -1,
+                        editedItem: {
+                            id: '',
+                            tipo: '',
+                            categoria: '',
+                            nome: '',
+                            imagem: '',
+                            quantidade: '',
+                            custo: '',
+                            preco: '',
+                            descricao: '',
+                            vencimento: '',
+                            adicionais: '',
+
+                        },
+                        defaultItem: {
+                            id: '',
+                            tipo: '',
+                            categoria: '',
+                            nome: '',
+                            quantidade: '',
+                            imagem: '',
+                            custo: '',
+                            preco: '',
+                            descricao: '',
+                            vencimento: '',
+                        },
+
+                        editedIndex_prod: -1,
+                        editedItem_prod: {
+                            cod_prod: '',
+                            nome: '',
+                            qtd: '1',
+                            valor_unitario: '',
+                            valor_total: '',
+                            soma: 0,
+                            custo: 0,
+                        },
+                        defaultItem_prod: {
+                            cod_prod: '',
+                            nome: '',
+                            qtd: '1',
+                            valor_unitario: '',
+                            valor_total: '',
+                            soma: 0,
+                            custo: 0,
+                        },
+
+                        editedItem_categorias: {
+                            id: '',
+                            nome: '',
+                            imagem: '',
+                        },
+                        defaultItem_categorias: {
+                            id: '',
+                            nome: '',
+                            imagem: '',
+                        },
+                        editedItem_adicionais: {
+                            id: '',
+                            nome: '',
+                        },
+                        defaultItem_adicionais: {
+                            id: '',
+                            nome: '',
+                        },
+                        editedItem_itens_adicionais: {
+                            id: '',
+                            nome: '',
+                            preco: '',
+                        },
+                        defaultItem_itens_adicionais: {
+                            id: '',
+                            nome: '',
+                            preco: '',
+                        },
+                    }),
+
+                    computed: {
+
+                        formTitle() {
+                            return this.editedIndex === -1 ? 'Novo' : 'Editar'
+                        },
+                        formTitle_prod() {
+                            return this.editedIndex_prod === -1 ? 'Novo' : 'Editar'
+                        },
+                        formTitle_categorias() {
+                            return this.editedIndex_categorias === -1 ? 'Novo' : 'Editar'
+                        },
+                        formTitle_adicionais() {
+                            return this.editedIndex_adicionais === -1 ? 'Novo' : 'Editar'
+                        },
+                        formTitle_itens_adicionais() {
+                            return this.editedIndex_itens_adicionais === -1 ? 'Novo' : 'Editar'
+                        },
+                    },
+
+                    watch: {
+                        date_vencimento(val) {
+                            this.editedItem.vencimento = this.formatDate(this.date_vencimento)
+                        },
+                        dialog(val) {
+                            encode_cadprod()
+                            this.produtos = []
+                            if (this.editedItem.tipo == '') {
+                                this.editedItem.tipo = 'Produto'
+                                this.tipo()
+                            }
+                            document.getElementById("input_cmprss_cadprod").value = ''
+                            if (this.editedItem.imagem == '') {
+                                document.getElementById("comp_img_cadprod").src = 'https://i.ibb.co/n1g2HRY/addimagem.jpg'
+                            }
+                            val || this.close()
+                        },
+                        dialogDelete(val) {
+                            val || this.closeDelete()
+                        },
+                        dialog_prod(val) {
+                            val || this.close_prod()
+                        },
+                        dialogDelete_prod(val) {
+                            val || this.closeDelete_prod()
+                        },
+                        date(val) {
+                            this.pag_fim_pagar = this.formatDate(this.date_pag_fim_pagar)
+                        },
+                        dialog_lanc_prod() {
+                            leitor_cod('Div_leitor')
+                            this.produtos = []
+                            this.soma_prod = 0.00
+                        },
+                        dialog_categorias(val) {
+                            imagem_alterou = 0
+                            encode()
+                            this.initialize_categorias()
+                            val || this.close_categorias()
+                        },
+                        dialog_categorias_cad(val) {
+                            document.getElementById("input_cmprss").value = ''
+                            if (this.editedItem_categorias.imagem == '') {
+                                document.getElementById("comp_img").src = 'https://i.ibb.co/n1g2HRY/addimagem.jpg'
+                            }
+                        },
+                        dialog_adicionais(val) {
+                            this.initialize_adicionais()
+                            val || this.close_adicionais()
+                        },
+                        dialog_adicionais_cad(val) {
+                            this.itens_adicionais = []
+                            val || this.close_adicionais()
+                        },
+
+                        dialog_itens_adicionais(val) {
+                            val || this.close_itens_adicionais()
+                        },
+
+                        /*dialogDelete_categorias(val) {
+                            val || this.closeDelete_categorias()
+                        },*/
+
+
+                    },
+
+                    created() {
+                        this.initialize()
+                        this.info_empresa()
+
+                        if (sessionStorage.login_ativo != 'true') {
+                            window.location.href = window.location.href.slice(0,window.location.href.length - 22) + "login.html";
+                        }
+
+                        if (sessionStorage.usuadm == '0') {
+                            this.disabled_sem_perm = true
+                        }
+                    },
+
+                    methods: {
+
+
+
+                        async save_lanc_prod(item) {
+                            try {
+                                this.carregando = true
+                                for (var i = 0; i < this.produtos.length; i++) {
+                                    this.produtos[i].valor_unitario = this.produtos[i].valor_unitario //.toString().replace(",", ".")
+                                    this.produtos[i].qtd = this.produtos[i].qtd.toString().replace(",", ".")
+                                    axios.post(this.url + '/api/produtos/produtos/altera_qtd_custo?Custo=' + this.produtos[i].valor_unitario + '&Qtd=' + this.produtos[i].qtd + '&Id=' + this.produtos[i].cod_prod + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                                }
+
+                                if (this.check_prazo == true) {
+                                    data_vencimento = new Date().getFullYear().toString() + '-' + (new Date().getMonth() + 1).toString() + '-' + new Date().getDate().toString()
+
+                                    valor_contas = this.soma_prod.slice(3, this.soma_prod.length)
+
+                                    if (parseFloat(valor_contas.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                        valor_contas = valor_contas.toString().replace(".", "");
+                                    }
+
+                                    valor_contas = valor_contas.toString().replace(",", ".");
+
+                                    salvar_resq = await axios.post(this.url + '/api/Contas_pagar/Contas_pagar/salvar?pago=0&data_pagamento=null&descricao=Entrada mercadorias&vencimento=' + data_vencimento + '&parcela=1&valor=' + valor_contas + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                                }
+
+                                this.snackbar = true
+                                this.text_aviso = 'Produtos lançado com sucesso !'
+                                this.cor_aviso = "success"
+                                this.icon = "mdi-mdi-check-circle"
+
+                                this.dialog_lanc_prod = false
+                                this.carregando = false
+
+                                this.imprimir_lanc_prod()
+                            } catch {
+                                alert("Erro: " + err.message);
+                                this.carregando = false
+                            }
+                        },
+
+
+                        async save_prod() {
+                            //listar_produtos = await axios.get(this.url + '/api/produtos/listar/produtos_id?Id=' + this.editedItem_prod.cod_prod + '&Fk_empresa=' + sessionStorage.id_empresalogado)
+                            prod_selecionado = listar_produtos.data.find(prod => prod.id === this.editedItem_prod.cod_prod)
+
+                            if (this.editedItem_prod.qtd == '') {
+                                this.editedItem_prod.qtd = '1'
+                            }
+
+                            if (prod_selecionado != null) {
+                                if (this.editedItem_prod.cod_prod != "") {
+                                    if (this.editedItem_prod.valor_unitario != "") {
+
+                                        if (this.editedItem_prod.valor_unitario.indexOf(",") != -1) {
+                                            this.editedItem_prod.valor_unitario = this.editedItem_prod.valor_unitario.replace('.', '').replace(',', '.')
+                                        }
+                                        somar_total = parseFloat(this.editedItem_prod.qtd) * parseFloat(this.editedItem_prod.valor_unitario)
+                                        this.editedItem_prod.valor_total = somar_total.toLocaleString('pt-br', { minimumFractionDigits: 2 });;
+
+                                        this.editedItem_prod.custo = prod_selecionado.custo
+                                        if (this.editedIndex_prod > -1) {
+                                            Object.assign(this.produtos[this.editedIndex_prod], this.editedItem_prod)
+
+                                            this.close_prod()
+
+                                            // this.soma = parseFloat(this.editedItem_prod.valor_total)
+                                            // this.soma_prod = this.soma.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' });
+
+                                        } else {
+                                            this.produtos.push(this.editedItem_prod)
+                                            this.close_prod()
+
+
+                                            //  this.soma = this.soma + parseFloat(this.editedItem_prod.valor_total)
+                                            //  this.soma_prod = this.soma.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' });
+
+                                        }
+
+                                        this.exibe_total()
+                                    } else {
+                                        this.exib_erro_valor_unitario = true
+                                    }
+                                } else {
+                                    this.exib_erro_cod_prod = true
+                                }
+                            } else {
+                                this.snackbar = true
+                                this.text_aviso = 'Código do produto não encontrado, Verifique !'
+                                this.cor_aviso = "red"
+                                this.icon = "mdi-alert-circle-outline"
+                            }
+
+                        },
+
+                        async initialize_categorias() {
+
+
+                            //listar_categorias = await axios.get(this.url + '/api/categorias/listar/categorias?Fk_empresa=' + sessionStorage.id_empresalogado)
+
+                            var { data, error } = await supabase
+                            .from('categorias')
+                            .select()
+                            .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                            listar_categorias = data
+
+                            this.categorias = []
+
+                            for (var i = 0; i < listar_categorias.length; i++) {
+
+                                this.categorias.push(
+                                    {
+                                        id: listar_categorias[i].id,
+                                        nome: listar_categorias[i].nome,
+                                        imagem: listar_categorias[i].imagem,
+                                    }
+                                )
+                            }
+                        },
+
+                        async save_categorias() {
+                            try {
+                                this.carregando = true
+
+                                if (this.editedIndex_categorias > -1) {
+                                    Object.assign(this.categorias[this.editedIndex_categorias], this.editedItem_categorias)
+
+                                    //salvar_resq = await axios.post(this.url + '/api/categorias/categorias/alterar?Id=' + id_categorias + '&Nome=' + this.categorias[this.editedIndex_categorias].nome + '&fk_empresa=' + sessionStorage.id_empresalogado)
+
+                                    var { error } = await supabase
+                                    .from('categorias')
+                                    .update({ nome: this.categorias[this.editedIndex_categorias].nome,
+                                        imagem: document.getElementById('comp_img').currentSrc})
+                                    .eq('id', id_categorias)
+                                    .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                                    /*if (imagem_alterou == 1) {
+
+                                        imagem_alterou = 0
+                                        // imagem = txt.value.replace(/\s/g, '');
+                                        // imagem = imagem.replace(/\r?\n|\r/g, '');
+                                        axios.delete(this.url + '/api/categorias/categorias/deletar_foto?id=' + id_categorias + '&fk_empresa=' + sessionStorage.id_empresalogado)
+
+                                        ini = 0
+                                        fim = 2000
+                                        //teste = 0
+                                        do {
+                                            imagem2000carac = document.getElementById('comp_img').currentSrc.substr(ini, 1000)
+                                            imagem2000carac = imagem2000carac.replaceAll("+", "**maisx");
+                                            ini = ini + 1000
+                                            salvar_resq = await axios.post(this.url + '/api/categorias/categorias/altera_foto/?imagem=' + imagem2000carac + '&id=' + id_categorias + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                                        } while (imagem2000carac != '')
+                                    }*/
+                                }
+                                else {
+                                    this.categorias.push(this.editedItem_categorias)
+
+                                    data = this.categorias[this.categorias.length - 1].nome
+
+                                    //salvar_resq = await axios.post(this.url + '/api/categorias/categorias/salvar?Nome=' + this.categorias[this.categorias.length - 1].nome + '&Fk_empresa=' + sessionStorage.id_empresalogado)
+
+                                    var { error } = await supabase
+                                    .from('categorias')
+                                    .insert({ nome: this.categorias[this.categorias.length - 1].nome, 
+                                        fk_empresa: sessionStorage.id_empresalogado,
+                                    imagem: document.getElementById('comp_img').currentSrc})
+                                    
+
+                                    this.initialize_categorias()
+
+                                    /*if (imagem_alterou == 1) {
+                                        imagem_alterou = 0
+
+                                        ini = 0
+                                        fim = 2000
+                                        //teste = 0
+
+                                        listar_categorias = await axios.get(this.url + '/api/categorias/listar/categorias?Fk_empresa=' + sessionStorage.id_empresalogado)
+
+                                        maior_id = listar_categorias.reduce(function (prev, current) {
+                                            return parseInt(prev.id) > parseInt(current.id) ? prev : current;
+                                        });
+
+                                        do {
+                                            imagem2000carac = document.getElementById('comp_img').currentSrc.substr(ini, 1000)
+                                            imagem2000carac = imagem2000carac.replaceAll("+", "**maisx");
+                                            ini = ini + 1000
+                                            salvar_resq = await axios.post(this.url + '/api/categorias/categorias/altera_foto/?imagem=' + imagem2000carac + '&id=' + maior_id.id + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                                        } while (imagem2000carac != '')
+                                    }*/
+                                }
+
+                                this.carregando = false
+                                this.snackbar = true
+                                this.text_aviso = 'Salvo com sucesso !'
+                                this.cor_aviso = "success"
+
+                                this.close_categorias()
+
+                                this.initialize_categorias()
+
+                            }
+                            catch (err) {
+                                this.carregando = false
+                                alert("Erro: " + err.message);
+                            }
+                        },
+
+
+                        async editItem_categorias(item) {
+
+                            this.editedIndex_categorias = this.categorias.indexOf(item)
+                            this.editedItem_categorias = Object.assign({}, item)
+                            this.dialog_categorias_cad = true
+
+                            id_categorias = this.categorias[this.categorias.indexOf(item)].id
+
+                            if (item.imagem != "") {
+                                document.getElementById("comp_img").src = item.imagem;
+                            } else {
+                                document.getElementById("comp_img").src = 'https://i.ibb.co/n1g2HRY/addimagem.jpg'
+                            }
+
+                        },
+
+                        async deleteItem_categorias(item) {
+                            const index = this.categorias.indexOf(item)
+                            id = this.categorias[index].id
+                            mensagem = confirm('Deseja deletar o registro?') && this.categorias.splice(index, 1)
+
+
+                            if (mensagem != false) {
+                                //axios.delete(this.url + '/api/categorias/categorias/deletar?Id=' + id + '&fk_empresa=' + sessionStorage.id_empresalogado)                              
+                                
+                                var { error } = await supabase
+                                .from('categorias')
+                                .delete()
+                                .eq('id', id)
+                                .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                                this.snackbar = true
+                                this.text_aviso = 'Excluído com sucesso !'
+                                this.cor_aviso = "success"
+                            }
+                        },
+
+                        async initialize_adicionais() {
+
+
+                            //listar_adicionais = await axios.get(this.url + '/api/adicionais/listar/adicionais?Fk_empresa=' + sessionStorage.id_empresalogado)
+
+                            var { data, error } = await supabase
+                            .from('adicionais')
+                            .select()
+                            .eq('fk_empresa', sessionStorage.id_empresalogado)    
+
+                            listar_adicionais = data
+
+                            this.adicionais = []
+
+                            for (var i = 0; i < listar_adicionais.length; i++) {
+
+                                this.adicionais.push(
+                                    {
+                                        id: listar_adicionais[i].id,
+                                        nome: listar_adicionais[i].nome,
+                                    }
+                                )
+                            }
+                        },
+
+                        async initialize_itens_adicionais() {
+
+
+                            //listar_itens_adicionais = await axios.get(this.url + '/api/itens_adicionais/listar/itens_adicionais?Fk_adicionais=' + id_adicionais + '&Fk_empresa=' + sessionStorage.id_empresalogado)
+
+                            var { data, error } = await supabase
+                            .from('itens_adicionais')
+                            .select()
+                            .eq('fk_adicionais', id_adicionais)  
+                            .eq('fk_empresa', sessionStorage.id_empresalogado)    
+
+                            listar_itens_adicionais = data
+
+                            this.itens_adicionais = []
+
+                            for (var i = 0; i < listar_itens_adicionais.length; i++) {
+
+                                this.itens_adicionais.push(
+                                    {
+                                        id: listar_itens_adicionais[i].id,
+                                        nome: listar_itens_adicionais[i].nome,
+                                        preco: listar_itens_adicionais[i].preco.toLocaleString('pt-br', {minimumFractionDigits: 2}),
+                                    }
+                                )
+                            }
+                        },
+
+                        async save_adicionais() {
+                            try {
+                                this.carregando = true
+
+                                if (this.editedIndex_adicionais > -1) {
+                                    Object.assign(this.adicionais[this.editedIndex_adicionais], this.editedItem_adicionais)
+
+                                    //salvar_resq = await axios.post(this.url + '/api/adicionais/adicionais/alterar?Id=' + id_adicionais + '&Nome=' + this.adicionais[this.editedIndex_adicionais].nome + '&fk_empresa=' + sessionStorage.id_empresalogado)
+
+                                    var { error } = await supabase
+                                    .from('adicionais')
+                                    .update({ nome: this.adicionais[this.editedIndex_adicionais].nome })
+                                    .eq('id', id_adicionais)
+                                    .eq('fk_empresa', sessionStorage.id_empresalogado)
+                                }
+                                else {
+                                    this.adicionais.push(this.editedItem_adicionais)
+
+                                    //salvar_resq = await axios.post(this.url + '/api/adicionais/adicionais/salvar?Nome=' + this.adicionais[this.adicionais.length - 1].nome + '&Fk_empresa=' + sessionStorage.id_empresalogado)
+
+                                    var { error } = await supabase
+                                    .from('adicionais')
+                                    .insert({ nome: this.adicionais[this.adicionais.length - 1].nome, fk_empresa: sessionStorage.id_empresalogado })
+                                }
+
+                                if (this.alterou_itens_adicionais == true) {
+                                    this.alterou_itens_adicionais = false
+
+                                   if (this.editedIndex_adicionais > -1) {
+                                        id_add = this.adicionais[this.editedIndex_adicionais].id
+                                    } else {
+                                        //listar_adicionais = await axios.get(this.url + '/api/adicionais/listar/adicionais?Fk_empresa=' + sessionStorage.id_empresalogado)
+                                        var { data, error } = await supabase
+                                        .from('adicionais')
+                                        .select()
+                                        .eq('fk_empresa', sessionStorage.id_empresalogado)    
+
+                                        listar_adicionais = data
+                                        
+                                        id_add = listar_adicionais[listar_adicionais.length - 1].id
+                                    }
+
+                                    //axios.delete(this.url + '/api/itens_adicionais/itens_adicionais/deletar_por_fk_adicionais?fk_adicionais=' + id_add + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                                 
+                                    var { error } = await supabase
+                                    .from('itens_adicionais')
+                                    .delete()
+                                    .eq('fk_adicionais', id_add)
+                                    .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                                    for (var i = 0; i < this.itens_adicionais.length; i++) {
+                                        preco = this.itens_adicionais[i].preco
+
+                                        if (preco == "") {
+                                            preco = 0
+                                        }
+
+                                        if (parseInt(preco.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                            preco = preco.toString().replace(".", "");
+                                        }
+                                        preco = preco.toString().replace(",", ".");
+
+                                        //salvar_resq = await axios.post(this.url + '/api/itens_adicionais/itens_adicionais/salvar?Nome=' + this.itens_adicionais[i].nome + '&preco=' + preco + '&Fk_adicionais=' + id_add + '&Fk_empresa=' + sessionStorage.id_empresalogado)
+                  
+                                        var { error } = await supabase
+                                        .from('itens_adicionais')
+                                        .insert({ nome: this.itens_adicionais[i].nome, preco: preco, fk_adicionais: id_add, fk_empresa: sessionStorage.id_empresalogado})
+
+                                    }
+                                }
+                                this.carregando = false
+                                this.snackbar = true
+                                this.text_aviso = 'Salvo com sucesso !'
+                                this.cor_aviso = "success"
+
+                                this.close_adicionais()
+
+                                this.initialize_adicionais()
+
+                            }
+                            catch (err) {
+                                this.carregando = false
+                                alert("Erro: " + err.message);
+                            }
+                        },
+
+                        
+
+                        async save_itens_adicionais() {
+
+                            this.alterou_itens_adicionais = true
+                            try {
+                                if (this.editedIndex_itens_adicionais > -1) {
+                                    Object.assign(this.itens_adicionais[this.editedIndex_itens_adicionais], this.editedItem_itens_adicionais)
+                                }
+                                else {
+                                    this.itens_adicionais.push(this.editedItem_itens_adicionais)
+                                }
+                                this.close_itens_adicionais()
+                            }
+                            catch (err) {
+                                alert("Erro: " + err.message);
+                            }
+                        },
+
+                        async editItem_adicionais(item) {
+
+                            this.editedIndex_adicionais = this.adicionais.indexOf(item)
+                            this.editedItem_adicionais = Object.assign({}, item)
+                            this.dialog_adicionais_cad = true
+
+                            id_adicionais = this.adicionais[this.adicionais.indexOf(item)].id
+
+                            this.initialize_itens_adicionais()
+                        },
+
+                        async editItem_itens_adicionais(item) {
+
+                            this.editedIndex_itens_adicionais = this.itens_adicionais.indexOf(item)
+                            this.editedItem_itens_adicionais = Object.assign({}, item)
+                            this.dialog_itens_adicionais_cad = true
+
+                            id_itens_adicionais = this.itens_adicionais[this.itens_adicionais.indexOf(item)].id
+                        },
+
+                        async deleteItem_adicionais(item) {
+                            const index = this.adicionais.indexOf(item)
+                            id = this.adicionais[index].id
+                            mensagem = confirm('Deseja deletar o registro?') && this.adicionais.splice(index, 1)
+
+
+                            if (mensagem != false) {
+                                //axios.delete(this.url + '/api/itens_adicionais/itens_adicionais/deletar_por_fk_adicionais?fk_adicionais=' + id + '&fk_empresa=' + sessionStorage.id_empresalogado)  
+                                //await axios.post(this.url + '/api/produtos/produtos/deleta_adicionais?Fk_adicionais=' + id + '&Fk_empresa=' + sessionStorage.id_empresalogado)
+                                //axios.delete(this.url + '/api/adicionais/adicionais/deletar?Id=' + id + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                                
+                                var { error } = await supabase
+                                    .from('adicionais')
+                                    .delete()
+                                    .eq('id', id)
+                                    .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                                this.snackbar = true
+                                this.text_aviso = 'Excluído com sucesso !'
+                                this.cor_aviso = "success"
+                            }
+                        },
+
+                        deleteItem_itens_adicionais(item) {
+                            const index = this.itens_adicionais.indexOf(item)
+                            id = this.itens_adicionais[index].id
+                            mensagem = confirm('Deseja deletar o registro?') && this.itens_adicionais.splice(index, 1)
+
+                            this.alterou_itens_adicionais = true
+                        },
+
+                        async preenche_prod() {
+
+                            //if (listar_produtos.data.length > 0) {
+                            prod_selecionado = listar_produtos.data.find(prod => prod.id === this.editedItem_prod.cod_prod)
+                            /*   } else {
+                                   listar_produtos = await axios.get(this.url + '/api/produtos/listar/produtos_id?Id=' + this.editedItem_prod.cod_prod + '&Fk_empresa=' + sessionStorage.id_empresalogado)
+                                   prod_selecionado = listar_produtos.data[0].id
+                               }*/
+                            this.editedItem_prod.cod_prod = prod_selecionado.id
+
+                            if (this.editedItem_prod.valor_unitario == '') {
+                                this.editedItem_prod.valor_unitario = prod_selecionado.custo
+                            }
+
+                            /* if (parseFloat(this.editedItem_prod.valor_unitario.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                 this.editedItem_prod.valor_unitario = this.editedItem_prod.valor_unitario.toString().replace(".", "");
+                             }
+                             this.editedItem_prod.valor_unitario = this.editedItem_prod.valor_unitario.toString().replace(",", ".");
+                             */
+
+                            valor_unitario = this.editedItem_prod.valor_unitario.toString().replace('.', '').replace(',', '.')
+
+                            somar_total = parseFloat(this.editedItem_prod.qtd) * parseFloat(valor_unitario)
+                            this.editedItem_prod.valor_total = somar_total.toLocaleString('pt-br', { minimumFractionDigits: 2 });;
+                            this.editedItem_prod.nome = prod_selecionado.produto
+                        },
+
+                        async somar_total() {
+                            //listar_produtos = await axios.get(this.url + '/api/produtos/listar/produtos_nome_igual?Nome=' + this.editedItem_prod.nome + '&fk_empresa=' + sessionStorage.id_empresalogado)
+
+                            prod_selecionado = listar_produtos.data.find(prod => prod.produto === this.editedItem_prod.nome)
+
+                            this.editedItem_prod.cod_prod = prod_selecionado.id
+
+
+                            this.editedItem_prod.valor_unitario = prod_selecionado.custo//.toString().replace(",", ".")).toLocaleString('pt-br', { minimumFractionDigits: 2 });;
+
+
+                            /* if (parseFloat(this.editedItem_prod.valor_unitario.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                 this.editedItem_prod.valor_unitario = this.editedItem_prod.valor_unitario.toString().replace(".", "");
+                             }*/
+
+                            this.editedItem_prod.valor_unitario = this.editedItem_prod.valor_unitario.toString().replace('.', '').replace(',', '.')
+
+                            somar_total = parseFloat(this.editedItem_prod.qtd) * parseFloat(this.editedItem_prod.valor_unitario)
+                            this.editedItem_prod.valor_total = somar_total.toLocaleString('pt-br', { minimumFractionDigits: 2 });;
+                        },
+
+
+                        editItem_prod(item) {
+                            this.editedIndex_prod = this.produtos.indexOf(item)
+                            this.editedItem_prod = Object.assign({}, item)
+                            this.dialog_prod = true
+                        },
+
+                        deleteItem_prod(item) {
+
+
+                            const index = this.produtos.indexOf(item)
+                            mensagem = confirm('Deseja deletar o registro ? (esta ação é permanente ! )') && this.produtos.splice(index, 1)
+
+                            if (mensagem != false) {
+                                this.exibe_total()
+                            }
+                        },
+
+
+                        closeDelete() {
+                            this.dialogDelete_prod = false
+                            this.$nextTick(() => {
+                                this.editedItem_prod = Object.assign({}, this.defaultItem_prod)
+                                this.editedIndex_prod = -1
+                            })
+                        },
+
+                        deleteItemConfirm() {
+                            this.produtos.splice(this.editedIndex_prod, 1)
+                            this.closeDelete_prod()
+                        },
+
+                        deleteItemConfirm_prod() {
+                            this.produtos.splice(this.editedIndex_prod, 1)
+                            this.closeDelete_prod()
+                        },
+
+                        close_prod() {
+                            this.dialog_prod = false
+                            this.exib_erro_cod_prod = false,
+                                this.exib_erro_valor_unitario = false,
+                                this.$nextTick(() => {
+                                    this.editedItem_prod = Object.assign({}, this.defaultItem_prod)
+                                    this.editedIndex_prod = -1
+                                })
+                        },
+
+                        close_categorias() {
+                            this.dialog_categorias_cad = false
+                            this.exib_erro_categorias = false,
+                                this.$nextTick(() => {
+                                    this.editedItem_categorias = Object.assign({}, this.defaultItem_categorias)
+                                    this.editedIndex_categorias = -1
+                                })
+                        },
+
+                        close_adicionais() {
+                            this.dialog_adicionais_cad = false
+                            this.exib_erro_adicionais = false,
+                                this.$nextTick(() => {
+                                    this.editedItem_adicionais = Object.assign({}, this.defaultItem_adicionais)
+                                    this.editedIndex_adicionais = -1
+                                })
+                        },
+
+                        close_itens_adicionais() {
+                            this.dialog_itens_adicionais_cad = false
+                            this.exib_erro_itens_adicionais = false,
+                                this.$nextTick(() => {
+                                    this.editedItem_itens_adicionais = Object.assign({}, this.defaultItem_itens_adicionais)
+                                    this.editedIndex_itens_adicionais = -1
+                                })
+                        },
+
+                        closeDelete_prod() {
+                            this.dialogDelete_prod = false
+                            this.$nextTick(() => {
+                                this.editedItem_prod = Object.assign({}, this.defaultItem_prod)
+                                this.editedIndex_prod = -1
+                            })
+                        },
+
+
+                        formatDate(date) {
+                            if (!date) return null
+
+                            const [year, month, day] = date.split('-')
+                            return `${day}/${month}/${year}`
+                        },
+
+                        info_empresa() {
+                            this.nome_empresa = sessionStorage.nome_empresa
+                        },
+
+                        exibe_total() {
+                            total = 0
+
+                            for (var i = 0; i < this.produtos.length; i++) {
+                                valor = this.produtos[i].valor_total.toString()
+                                if (parseFloat(this.produtos[i].valor_total.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                    valor = valor.replace(".", "")
+                                }
+                                valor = valor.toString().replace(",", ".")
+
+                                total = total + parseFloat(valor)
+                            }
+                            this.soma_prod = total.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' });
+                        },
+
+                        async initialize() {
+
+                            //listar_categorias = await axios.get(this.url + '/api/categorias/listar/categorias?Fk_empresa=' + sessionStorage.id_empresalogado)
+
+                            var { data, error } = await supabase
+                            .from('categorias')
+                            .select()
+                            .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                            listar_categorias = data
+
+                            for (var i = 0; i < listar_categorias.length; i++) {
+                                this.items_categoria.push(
+                                    {
+                                        id_categorias: listar_categorias[i].id,
+                                        nome_categorias: listar_categorias[i].nome,
+                                    }
+                                )
+                            }
+
+                            //listar_adicionais = await axios.get(this.url + '/api/adicionais/listar/adicionais?Fk_empresa=' + sessionStorage.id_empresalogado)
+
+                            var { data, error } = await supabase
+                            .from('adicionais')
+                            .select()
+                            .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                            listar_adicionais = data
+
+                            this.adicionais = []
+                            for (var i = 0; i < listar_adicionais.length; i++) {
+
+                                this.adicionais.push(
+                                    {
+                                        id: listar_adicionais[i].id,
+                                        nome: listar_adicionais[i].nome,
+                                    }
+                                )
+                            }
+
+
+                            //listar = await axios.get(this.url + '/api/produtos/listar/produtos?fk_empresa=' + sessionStorage.id_empresalogado)
+
+                            var { data, error } = await supabase
+                            .from('produtos')
+                            .select()
+                            .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                            listar_produtos = data
+
+                            this.items_prod = []
+                            //listar_produtos = await axios.get(this.url + '/api/produtos/listar/produtos?Fk_empresa=' + sessionStorage.id_empresalogado)
+                            for (var i = 0; i < listar_produtos.length; i++) {
+                                this.items_prod.push(listar_produtos[i].produto)
+                            }
+
+                            this.dados_tabela = []
+                            for (var i = 0; i < listar_produtos.length; i++) {
+
+
+
+                                this.dados_tabela.push(
+                                    {
+                                        id: listar_produtos[i].cod_prod,
+                                        nome: listar_produtos[i].produto,
+                                        preco: listar_produtos[i].valor.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'}),
+                                        imagem: listar_produtos[i].foto_produto,
+                                        categoria: listar_produtos[i].fk_categoria,
+                                        adicionais: listar_produtos[i].fk_adicionais,
+                                        ingredientes: listar_produtos[i].ingredientes
+                                        /*id: listar_produtos[i].id,
+                                        nome: listar_produtos[i].produto,
+                                        quantidade: listar_produtos[i].qtd,
+                                        custo: 'R$ ' + listar_produtos[i].custo, //.slice(2, listar.data[i].custo.length),
+                                        preco: 'R$ ' + listar_produtos[i].valor_pessoa_fisica, //.slice(2, listar.data[i].valor_pessoa_fisica.length),
+                                        tipo: listar_produtos[i].tipo,
+                                        categoria: listar_produtos[i].categoria,
+                                        imagem: listar_produtos[i].imagem_link,
+                                        descricao: listar_produtos[i].descricao.replaceAll("\\n", "\n"),
+                                        vencimento: listar_produtos[i].data_validade.slice(0, 10),
+                                        lucro: Math.round(((parseFloat(listar_produtos[i].valor_pessoa_fisica.replaceAll(",", ".")) - parseFloat(listar.data[i].custo.replaceAll(",", "."))) * 100) / parseFloat(listar.data[i].custo.replaceAll(",", "."))),
+                                        adicionais: listar_produtos[i].adicionais,*/
+                                    }
+                                )
+                            }
+                        },
+
+                        async editItem(item) {
+
+                            this.editedIndex = this.dados_tabela.indexOf(item)
+                            this.editedItem = Object.assign({}, item)
+
+                            //this.editedItem.custo = this.editedItem.custo.slice(3, this.editedItem.custo.length)
+                            this.editedItem.preco = this.editedItem.preco.slice(3, this.editedItem.preco.length)
+                            this.editedItem.etiqueta = this.editedItem.nome
+                            this.dialog = true
+                            this.tipo()
+
+                            id = this.dados_tabela[this.dados_tabela.indexOf(item)].id
+
+
+
+                            if (item.imagem != null && item.imagem != '') {
+                                document.getElementById("comp_img_cadprod").src = item.imagem;
+                            } else {
+                                document.getElementById("comp_img_cadprod").src = 'https://i.ibb.co/n1g2HRY/addimagem.jpg'
+                            }
+                        },
+
+                        async deleteItem(item) {
+                            const index = this.dados_tabela.indexOf(item)
+                            id = this.dados_tabela[index].id
+                            mensagem = confirm('Deseja deletar o registro?') && this.dados_tabela.splice(index, 1)
+
+
+                            if (mensagem != false) {
+                                //axios.delete(this.url + '/api/produtos/produtos/deletar_id?Id=' + id)
+
+                                var { error } = await supabase
+                                .from('produtos')
+                                .delete()
+                                .eq('cod_prod', id)
+                                .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                                this.snackbar = true
+                                this.text_aviso = 'Excluído com sucesso !'
+                                this.cor_aviso = "success"
+                            }
+                        },
+
+                        close() {
+                            this.dialog = false
+                            this.exib_erro = false
+                            this.$nextTick(() => {
+                                this.editedItem = Object.assign({}, this.defaultItem)
+                                this.editedIndex = -1
+                            })
+                        },
+
+                        close_lanc_prod() {
+                            this.dialog_lanc_prod = false
+                            this.exib_erro = false
+                        },
+
+
+                        async save(item) {
+/*
+                            if (sessionStorage.usuadm == '0') {
+                                this.snackbar = true
+                                this.text_aviso = 'Não é possivel salvar, usuário sem permissão'
+                                this.cor_aviso = "red"
+                                this.icon = "mdi-alert-circle-outline"
+                                return;
+                            }*/
+
+                            if (this.editedItem.nome == "" || this.editedItem.preco == "") {
+                                this.exib_erro = true
+                            } else {
+
+                                if (this.editedItem.id == "") {
+                                    this.exib_erro = true  
+                                    return
+                                }
+
+                                try {
+                                    /*if (this.editedItem.vencimento != '') {
+                                        data_vencimento = this.editedItem.vencimento
+                                        dia = data_vencimento.slice(0, 2);
+                                        mes = data_vencimento.slice(3, 5);
+                                        ano = data_vencimento.slice(6, 10);
+                                        data_vencimento = ano + "-" + mes + "-" + dia
+                                    } else {
+                                        data_vencimento = 'null'
+                                    }*/
+
+                                    if (this.editedItem.categoria == '') {
+                                        this.editedItem.categoria = null
+                                    }
+
+                                    this.carregando = true
+
+                                    if (this.editedIndex > -1) {
+                                        Object.assign(this.dados_tabela[this.editedIndex], this.editedItem)
+
+                                        //listar_id_existente = await axios.get(this.url + '/api/produtos/listar/produtos_id?Id=' + this.dados_tabela[this.editedIndex].id + '&fk_empresa=' + sessionStorage.id_empresalogado)
+
+                                        var { data, error } = await supabase
+                                        .from('produtos')
+                                        .select()
+                                        .eq('cod_prod', this.dados_tabela[this.editedIndex].id)
+                                        .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                                        listar_id_existente = data
+
+                                        id = this.dados_tabela[this.editedIndex].id
+
+                                        if (listar_id_existente.length == 0 || listar_produtos[this.editedIndex].cod_prod == id) {
+
+                                            nome = this.dados_tabela[this.editedIndex].nome,
+                                                //quantidade = this.dados_tabela[this.editedIndex].quantidade,
+                                            //quantidade = 1,
+                                                //custo = this.dados_tabela[this.editedIndex].custo,
+                                            preco = this.dados_tabela[this.editedIndex].preco
+                                            //tipo = this.dados_tabela[this.editedIndex].tipo
+                                            //descricao = this.dados_tabela[this.editedIndex].descricao.replaceAll("\n", "\\n")
+
+                                            /*if (parseInt(custo.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                                custo = custo.toString().replace(".", "");
+                                            }*/
+                                            if (parseInt(preco.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                                preco = preco.toString().replace(".", "");
+                                            }
+                                            preco = preco.toString().replace(",", ".");
+
+
+                                            //custo = custo.toString().replace(",", ".");
+
+
+                                            /*if (quantidade == "") {
+                                                quantidade = 0
+                                            }*/
+                                            //quantidade = 1
+
+                                            /*if (custo == "") {
+                                                custo = 0
+                                            }*/
+                                            if (preco == "") {
+                                                preco = 0
+                                            }
+
+                                            if (this.editedItem.adicionais != '') {
+                                                adicionais = this.editedItem.adicionais
+                                            } else {
+                                                adicionais = null
+                                            }
+
+                                            //salvar_resq = await axios.post(this.url + '/api/produtos/produtos/alterar?Categoria=' + this.editedItem.categoria + '&Id=' + listar.data[this.editedIndex].id + '&data_validade=' + data_vencimento + '&Produto=' + nome + '&Custo=' + custo + '&Valor_pessoa_fisica=' + preco + '&Valor_pessoa_juridica=0&Qtd=' + quantidade + '&estoque_minimo=0&tipo=' + tipo + '&descricao=' + descricao + '&Id_novo=' + id + '&adicionais=' + adicionais + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                                            
+                                            var { error } = await supabase
+                                            .from('produtos')
+                                            .update({produto: nome,
+                                             cod_prod: this.editedItem.id,
+                                             valor: preco,
+                                             fk_adicionais: adicionais,
+                                             fk_categoria: this.editedItem.categoria,
+                                             foto_produto: document.getElementById('comp_img_cadprod').currentSrc,
+                                             ingredientes: this.editedItem.ingredientes
+                                            })
+                                            .eq('id', listar_produtos[this.editedIndex].id)
+                                            .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                                            /*
+                                            if (imagem_alterou == 1) {
+
+                                                imagem_alterou = 0
+                                                // imagem = txt.value.replace(/\s/g, '');
+                                                // imagem = imagem.replace(/\r?\n|\r/g, '');
+                                                axios.delete(this.url + '/api/produtos/produtos/deletar_foto?id=' + listar.data[this.editedIndex].id + '&fk_empresa=' + sessionStorage.id_empresalogado)
+
+                                                ini = 0
+                                                fim = 2000
+                                                //teste = 0
+                                                do {
+                                                    imagem2000carac = document.getElementById('comp_img_cadprod').currentSrc.substr(ini, 1000)
+                                                    imagem2000carac = imagem2000carac.replaceAll("+", "**maisx");
+                                                    ini = ini + 1000
+                                                    salvar_resq = await axios.post(this.url + '/api/produtos/produtos/altera_foto/?imagem=' + imagem2000carac + '&id=' + listar.data[this.editedIndex].id + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                                                } while (imagem2000carac != '')
+                                            }*/
+
+                                        } else {
+                                            this.snackbar = true;
+                                            this.text_aviso = 'Código informado já existe, verifique !';
+                                            this.cor_aviso = "red";
+                                            this.carregando = false
+                                            return;
+                                        }
+
+                                        //this.dados_tabela[this.editedIndex].custo = 'R$ ' + this.dados_tabela[this.editedIndex].custo,
+                                            this.dados_tabela[this.editedIndex].preco = 'R$ ' + this.dados_tabela[this.editedIndex].preco
+
+                                    }
+                                    else {
+
+                                        this.dados_tabela.push(this.editedItem)
+
+                                        //listar_id_existente = await axios.get(this.url + '/api/produtos/listar/produtos_id?Id=' + this.dados_tabela[this.dados_tabela.length - 1].id + '&fk_empresa=' + sessionStorage.id_empresalogado)
+
+                                        var { data, error } = await supabase
+                                        .from('produtos')
+                                        .select()
+                                        .eq('cod_prod', this.dados_tabela[this.dados_tabela.length - 1].id)
+                                        .eq('fk_empresa', sessionStorage.id_empresalogado)
+
+                                        listar_id_existente = data
+
+                                        if (listar_id_existente.length == 0) {
+                                            id = this.dados_tabela[this.dados_tabela.length - 1].id,
+                                            nome = this.dados_tabela[this.dados_tabela.length - 1].nome,
+                                                //quantidade = this.dados_tabela[this.dados_tabela.length - 1].quantidade,
+                                                //quantidade = 1,
+                                                //custo = this.dados_tabela[this.dados_tabela.length - 1].custo,
+                                            preco = this.dados_tabela[this.dados_tabela.length - 1].preco
+
+                                            //tipo = this.dados_tabela[this.dados_tabela.length - 1].tipo
+                                            //descricao = this.dados_tabela[this.dados_tabela.length - 1].descricao.replaceAll("\n", "\\n")
+
+                                            //if (parseInt(custo.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                            //    custo = custo.toString().replace(".", "");
+                                            //}
+                                            if (parseInt(preco.toString().replaceAll(",", "").replaceAll(".", "").length) > 5) {
+                                                preco = preco.toString().replace(".", "");
+                                            }
+                                            preco = preco.toString().replace(",", ".");
+
+
+                                            //custo = custo.toString().replace(",", ".");
+
+                                            /*if (quantidade == "") {
+                                                quantidade = 0
+                                            }*/
+                                            //quantidade = 1
+
+                                            //if (custo == "") {
+                                            //    custo = 0
+                                            //}
+                                            if (preco == "") {
+                                                preco = 0
+                                            }
+
+
+                                            if (this.editedItem.adicionais != '') {
+                                                adicionais = this.editedItem.adicionais
+                                            }else {
+                                                adicionais = null
+                                            }
+                                            
+
+                                            //salvar_resq = await axios.post(this.url + '/api/produtos/produtos/salvar?Categoria=' + this.editedItem.categoria + '&data_validade=' + data_vencimento + '&Id=' + id + '&Produto=' + nome + '&Custo=' + custo + '&Valor_pessoa_fisica=' + preco + '&Valor_pessoa_juridica=0&Qtd=' + quantidade + '&estoque_minimo=0&tipo=' + tipo + '&descricao=' + descricao + '&adicionais=' + adicionais + '&fk_empresa=' + sessionStorage.id_empresalogado)
+
+                                            var { error } = await supabase
+                                            .from('produtos')
+                                            .insert({ cod_prod: id,
+                                             fk_categoria: this.editedItem.categoria,
+                                             produto: nome,
+                                             valor: preco,
+                                             fk_adicionais: adicionais,
+                                             fk_empresa: sessionStorage.id_empresalogado,
+                                             foto_produto: document.getElementById('comp_img_cadprod').currentSrc,
+                                             ingredientes: this.editedItem.ingredientes
+                                            })
+
+
+
+                                            /*if (imagem_alterou == 1) {
+                                                imagem_alterou = 0
+
+                                                ini = 0
+                                                fim = 2000
+                                                //teste = 0
+
+
+                                                do {
+                                                    imagem2000carac = document.getElementById('comp_img_cadprod').currentSrc.substr(ini, 1000)
+                                                    imagem2000carac = imagem2000carac.replaceAll("+", "**maisx");
+                                                    ini = ini + 1000
+                                                    salvar_resq = await axios.post(this.url + '/api/produtos/produtos/altera_foto/?imagem=' + imagem2000carac + '&id=' + id + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                                                } while (imagem2000carac != '')
+                                            }*/
+                                        } else {
+                                            this.snackbar = true;
+                                            this.text_aviso = 'Código informado já existe, verifique !';
+                                            this.cor_aviso = "red";
+                                            this.carregando = false
+                                            return;
+                                        }
+
+                                        //this.dados_tabela[this.dados_tabela.length - 1].custo = 'R$ ' + this.dados_tabela[this.dados_tabela.length - 1].custo,
+                                            this.dados_tabela[this.dados_tabela.length - 1].preco = 'R$ ' + this.dados_tabela[this.dados_tabela.length - 1].preco
+   
+                                    }
+
+                                    this.initialize()
+
+                                    this.snackbar = true
+                                    this.text_aviso = 'Salvo com sucesso !'
+                                    this.cor_aviso = "success"
+
+                                    this.close()
+
+                                }
+                                catch (err) {
+                                    alert("Erro: " + err.message);
+                                    this.close()
+                                }
+
+                            }
+
+                        },
+
+
+                        async pesquisar_categorias() {
+
+                            //listar_categorias = await axios.get(this.url + '/api/categorias/listar/categorias_pesq?Fk_empresa=' + sessionStorage.id_empresalogado + '&Nome=' + this.nome_pesq_categorias)
+
+                            var { data, error } = await supabase
+                                .from('categorias')
+                                .select()
+                                .eq('fk_empresa', sessionStorage.id_empresalogado)
+                                .ilike('nome', '%' + this.nome_pesq_categorias + '%')  
+
+                            listar_categorias = data
+
+                            this.categorias = []
+
+                            for (var i = 0; i < listar_categorias.length; i++) {
+
+                                this.categorias.push(
+                                    {
+                                        id: listar_categorias[i].id,
+                                        nome: listar_categorias[i].nome,
+                                        imagem: listar_categorias[i].imagem,
+                                    }
+                                )
+                            }
+
+                            this.dialog_pesq_categorias = false
+                        },
+
+                        async pesquisar() {
+
+                            /*if (this.filtrar_vencidos) {
+                                filtrar_vencidos = 'true'
+                            } else {
+                                filtrar_vencidos = 'false'
+                            }*/
+
+                            //listar = await axios.get(this.url + '/api/produtos/listar/produtos_filtro?Id=' + this.id_pesq + '&Nome=' + this.nome_pesq + '&filtrar_vencidos=' + filtrar_vencidos + '&fk_empresa=' + sessionStorage.id_empresalogado)
+                            
+                            if(this.id_pesq != '' && this.nome_pesq != ''){
+                                var { data, error } = await supabase
+                                .from('produtos')
+                                .select()
+                                .eq('fk_empresa', sessionStorage.id_empresalogado)
+                                .eq('cod_prod', this.id_pesq)
+
+                            .ilike('produto', '%' + this.nome_pesq + '%')  
+                            }else if(this.id_pesq != ''){
+                                var { data, error } = await supabase
+                                .from('produtos')
+                                .select()
+                                .eq('fk_empresa', sessionStorage.id_empresalogado)
+                                .eq('cod_prod', this.id_pesq)
+
+                            } else if(this.nome_pesq != ''){
+                                var { data, error } = await supabase
+                                .from('produtos')
+                                .select()
+                                .eq('fk_empresa', sessionStorage.id_empresalogado)
+                                .ilike('produto', '%' + this.nome_pesq + '%')  
+                            }else{
+                                var { data, error } = await supabase
+                                .from('produtos')
+                                .select()
+                                .eq('fk_empresa', sessionStorage.id_empresalogado)
+                            }
+   
+            
+                            
+                            listar_produtos = data
+
+                            this.dados_tabela = []
+                            for (var i = 0; i < listar_produtos.length; i++) {
+
+
+                                this.dados_tabela.push(
+                                    {
+                                        id: listar_produtos[i].cod_prod,
+                                        nome: listar_produtos[i].produto,
+                                        preco: listar_produtos[i].valor.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'}),
+                                        imagem: listar_produtos[i].foto_produto,
+                                        categoria: listar_produtos[i].fk_categoria,
+                                        adicionais: listar_produtos[i].fk_adicionais,
+                                    }
+                                )
+                            }
+
+                            this.dialog_pesq = false
+                        },
+
+                        tipo() {
+                            if (this.editedItem.tipo == 'Serviço') {
+                                this.editedItem.quantidade = ''
+                                this.disabled_qtd = true
+                            } else {
+                                this.disabled_qtd = false
+                            }
+                        },
+
+                        imprimir_etiqueta() {
+                            var doc = new jsPDF({
+                                format: [58, 800]
+                            })
+                            doc.setFontSize(9);
+                            doc.setFontType('bold');
+                            doc.text(this.editedItem.etiqueta, 29, 11, 'center');
+
+                            doc.setFontSize(24);
+
+                            doc.text('R$ ' + this.editedItem.preco, 27, 20, 'center');
+
+                            doc.save('Etiqueta.pdf')
+                        },
+
+                        imprimir_lanc_prod() {
+                            var doc = new jsPDF({
+                                format: [58, 800]
+                            })
+                            doc.setFontSize(8);
+
+                            doc.text('PRODUTOS LANÇADOS NO ESTOQUE', 29, 11, 'center');
+                            doc.setFontSize(8);
+
+                            doc.text(new Date().getDate() + '/' + (new Date().getMonth() + 1) + '/' + new Date().getFullYear() + ' ' + new Date().getHours() + ':' + new Date().getMinutes(), 29, 17, 'center');
+                            doc.text('____________________________________________________________________________________________________________________________________________________________________________', 0, 21);
+
+                            doc.setFontSize(9);
+                            doc.text('Descrição', 1, 28);
+                            doc.text('Qtd', 29, 28);
+                            doc.text('Custo', 37, 28);
+                            doc.text('Total', 48, 28);
+                            l = 32
+                            for (var i = 0; i < this.produtos.length; i++) {
+
+                                doc.setFontSize(7);
+                                doc.text(this.produtos[i].nome.substr(0, 18), 1, l);
+
+                                doc.text(this.produtos[i].qtd.toString(), 31, l);
+                                doc.text(this.produtos[i].valor_unitario, 41, l, 'center');
+                                doc.text(this.produtos[i].valor_total, 52, l, 'center');
+
+
+                                l = l + 3
+                                doc.text('-------------------------------------------------------------------------', 1, l);
+                                l = l + 3
+
+
+                            }
+                            doc.text('____________________________________________________________________________________________________________________________________________________________________________', 210, l - 2);
+                            doc.setFontSize(11);
+                            doc.text('              TOTAL:  ' + this.soma_prod, 3, l + 4);
+
+                            doc.save('produtos_lançados.pdf')
+                        },
+
+                        imprimir() {
+
+                            var doc = new jsPDF('landscape', 'pt', 'a4');
+                            doc.setFontSize(13);
+                            doc.text('Produtos', 3, 22);
+                            doc.text('____________________________________________________________________________________________________________________________________________________________________________', 0, 35);
+                            doc.setFontSize(10);
+                            doc.text('Código', 3, 51);
+                            doc.text('Produto', 120, 51);
+                            //doc.text('Quantidade', 430, 51);
+                            //doc.text('Preço de Custo', 538, 51);
+                            doc.text('Preço de venda', 650, 51);
+                            //doc.text('Data de vencimento', 750, 51);
+                            doc.text('______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________', 0, 58);
+                            l = 65
+                            cont = 0
+                            page = 1
+                            qtd_reg = 42
+                            doc.setFontSize(8);
+                            for (var i = 0; i < this.dados_tabela.length; i++) {
+                                doc.text('______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________', 0, l - 7);
+                                doc.text(this.dados_tabela[i].id.toString().substr(0, 20), 3, l + 3);
+                                doc.text(this.dados_tabela[i].nome.toString().substr(0, 40), 120, l + 3);
+                                //doc.text(this.dados_tabela[i].quantidade, 445, l + 3);
+                                //doc.text(this.dados_tabela[i].custo, 560, l + 3);
+                                doc.text(this.dados_tabela[i].preco, 665, l + 3);
+                                //doc.text(this.dados_tabela[i].vencimento.slice(0, 10), 765, l + 3);
+
+                                l = l + 12
+                                cont = cont + 1
+                                if (cont > qtd_reg) {
+                                    qtd_reg = 48
+                                    page = page + 1
+                                    doc.addPage();
+                                    doc.setPage(page)
+                                    l = 10
+                                    cont = 0
+                                }
+                            }
+
+                            //doc.addImage(imgData, 'JPEG', 15, 40, 20, 20);
+                            doc.save('Produto.pdf')
+                        }
+
+                    },
+                })
+
+            function formatarMoeda() {
+                if (document.getElementById('valor') != null) {
+                    var elemento = document.getElementById('valor');
+                } else {
+                    var elemento = document.getElementById('valor_leitor');
+                }
+
+
+                var valor = elemento.value;
+
+
+                valor = valor + '';
+                valor = parseInt(valor.replace(/[\D]+/g, ''));
+                valor = valor + '';
+                valor = valor.replace(/([0-9]{2})$/g, ",$1");
+
+                if (valor.length > 6) {
+                    valor = valor.replace(/([0-9]{3}),([0-9]{2}$)/g, ".$1,$2");
+                }
+
+                app.__vue__.editedItem_prod.valor_unitario = valor;
+
+                if (valor == 'NaN') app.__vue__.editedItem_prod.valor_unitario = '';
+
+                if (valor == 'NaN') app.__vue__.editedItem_prod.valor_unitario = '';
+
+            }
+        </script>
+
+
+    </body>
+    </html>
